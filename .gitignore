@@ -1,6 +1,9 @@
 **/.DS_Store
 __pycache__/
 binmaker-debug.py
+build_tools/
+CLAUDE.md
+REPO_REPORT.md
 
 bootloader/Release
 bootloader/Debug
