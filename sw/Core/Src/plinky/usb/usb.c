@@ -11,9 +11,7 @@ void init_usb(void) {
 
 void usb_frame(void) {
 	if (web_serial_connected != web_serial_was_connected) {
-		// web editor reconnected => reset
-		if (web_serial_connected)
-			web_editor_reset();
+		web_editor_reset();
 		web_serial_was_connected = web_serial_connected;
 	}
 

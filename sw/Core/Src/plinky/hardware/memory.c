@@ -7,6 +7,7 @@
 #include "synth/sequencer.h"
 #include "synth/strings.h"
 #include "ui/shift_states.h"
+#include "usb/web_editor.h"
 
 // cleanup
 #include "adc_dac.h"
@@ -71,7 +72,7 @@ static u8 load_pattern_id = 255;
 static u8 load_sample_id = 255;
 
 // item actually in ram
-u8 ram_preset_id = 255;
+static u8 ram_preset_id = 255;
 static u8 ram_pattern_id = 255;
 static u8 ram_sample_id = 255;
 
@@ -116,13 +117,11 @@ u32 get_sample_address(void) {
 	return ram_sample_id * MAX_SAMPLE_LEN;
 }
 
-const Preset* preset_flash_ptr(u8 preset_id) {
-	if (preset_id >= NUM_PRESETS)
-		return init_params_ptr();
+u8* preset_flash_ptr(u8 preset_id) {
 	FlashPage* fp = LATEST_FLASH_PTR(preset_id);
 	if (fp->footer.idx != preset_id || fp->footer.version != FOOTER_VERSION)
-		return init_params_ptr();
-	return (Preset*)fp;
+		return (u8*)init_params_ptr();
+	return (u8*)fp;
 }
 
 void set_sys_param(SysParam param, u16 value) {
@@ -492,7 +491,11 @@ void init_memory(void) {
 	// no existing floating preset
 	else {
 		// load & save preset slot into floating preset
-		memcpy(&cur_preset, preset_flash_ptr(load_preset_id), sizeof(Preset));
+		const Preset* src = init_params_ptr();
+		fp = LATEST_FLASH_PTR(load_preset_id);
+		if (fp->footer.idx == load_preset_id && fp->footer.version == FOOTER_VERSION)
+			src = (Preset*)fp;
+		memcpy(&cur_preset, src, sizeof(Preset));
 		flash_write_page(FLOAT_PRESET_ID, &cur_preset);
 		sys_params.preset_aligned = true;
 		// load & save pattern slot into floating pattern
@@ -774,6 +777,8 @@ void update_sample_ram(void) {
 // == SAVE / LOAD == //
 
 void load_preset(u8 preset_id) {
+	if (receiving_web_preset)
+		return;
 	load_preset_id = preset_id;
 	force_load_preset = true;
 	update_preset_ram();
@@ -872,6 +877,11 @@ void long_press_load_item(u8 item_id) {
 	// not holding shift pad: cue item for loading
 	else
 		cue_mem_item(item_id);
+}
+
+// line up cur_preset to be saved to ram_preset_id during the next tick
+void save_preset(void) {
+	edit_item_id = ram_preset_id;
 }
 
 // line up clear_item to be cleared during the next tick

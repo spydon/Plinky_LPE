@@ -4,9 +4,6 @@
 // this module manages the preset, pattern quarters, SampleInfo and SysParams that are curently loaded into ram
 // it manages retrieving data from, and writing data to onboard flash when needed
 
-// ram ids
-extern u8 ram_preset_id; // only for web editor
-
 // ram contents
 extern SysParams sys_params;
 extern Preset cur_preset;
@@ -15,8 +12,11 @@ extern SampleInfo cur_sample_info;
 
 // utils
 u32 get_sample_address(void);
-const Preset* preset_flash_ptr(u8 preset_id); // only for web editor
 void set_sys_param(SysParam param, u16 value);
+
+// web-editor
+u8* preset_flash_ptr(u8 preset_id);
+void load_preset(u8 preset_id);
 
 // get ram state
 bool preset_outdated(void);  // only for sequencer
@@ -37,12 +37,12 @@ void update_pattern_ram(void);
 void update_sample_ram(void);
 
 // save/load
-void load_preset(u8 preset_id); // only for web-editor
 void apply_cued_mem_items(void);
 void cue_mem_item(u8 item_id);
 
 // ui
 void long_press_load_item(u8 item_id);
+void save_preset(void);
 void clear_mem_item(void);
 
 // calib
