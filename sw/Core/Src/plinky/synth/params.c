@@ -494,6 +494,20 @@ static s32 param_val_mod(Param param_id, u16 rnd, u16 env, u16 pres) {
 		}
 	}
 
+	// the shape parameter can only modulate within the same oscillator shape type
+	if (param_id == P_SHAPE) {
+		s16 raw = param_val_raw(param_id, SRC_BASE);
+		// wavetable
+		if (raw > 0)
+			mod_val = maxi(1 << 17, mod_val); // 0.1%
+		// pulsewave
+		else if (raw < 0)
+			mod_val = mini(mod_val, -(1 << 16)); // -0.1%
+		// supersaw
+		else
+			mod_val = 0;
+	}
+
 	// all 7 mod sources have now been applied, scale and clamp to 16 bit
 	return clampi(mod_val >> 10, param_signed(param_id) ? -65536 : 0, 65536);
 }
