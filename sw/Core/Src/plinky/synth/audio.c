@@ -287,17 +287,16 @@ void audio_post(u32* audio_out, u32* audio_in) {
 	int k_target_delaytime = param_val(P_DLY_TIME);
 	// free timing
 	if (k_target_delaytime < 0)
-		k_target_delaytime = -k_target_delaytime;
+		k_target_delaytime = delay_samples_from_param(-k_target_delaytime) << 12;
 	// synced
 	else {
-		k_target_delaytime = sync_divs_32nds[param_index(P_DLY_TIME)];
-		// find max samples
-		int max_delay = 32000 * 600 * 4 / bpm_10x;
-		while (max_delay > DL_SIZE_MASK - 64)
-			max_delay >>= 1;
-		k_target_delaytime = (max_delay * k_target_delaytime) >> 5;
+		u8 num_32nds = sync_divs_32nds[param_index(P_DLY_TIME)];
+		u32 bar_samples = SAMPLE_RATE * 600 * 4 / bpm_10x;
+		// halve the samples if they don't fit in the delay buffer
+		while (bar_samples > DL_SIZE_MASK - 64)
+			bar_samples >>= 1;
+		k_target_delaytime = (bar_samples * num_32nds) << 7;
 	}
-	k_target_delaytime = delay_samples_from_param(k_target_delaytime) << 12;
 	int k_delaysend = (param_val(P_DLY_SEND) >> 9);
 
 	static int wobpos = 0;
