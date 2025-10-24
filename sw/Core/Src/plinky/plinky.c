@@ -102,30 +102,25 @@ static void launch_calib(u8 phase) {
 }
 
 void plinky_init(void) {
-	// init hardware
+	init_accel();
 	define_hardware_version();
 	init_gfx(); // including oled
-	init_codec();
-	init_accel();
-	init_leds();
-	init_spi();
+	check_bootloader_flash();
 	init_touchstrips();
+	init_audio();
+	init_codec();
 	init_adc_dac();
+	init_spi();
 	init_midi();
 	init_usb();
-	init_encoder();
-
-	// init software
-	check_bootloader_flash();
+	init_leds();
 	init_flash();
 	init_ram();
 	init_presets();
-	init_audio();
-
-	// start
 	launch_calib(0);
 	leds_bootswish();
 	launch_calib(1);
+	init_encoder();
 }
 
 // this runs with precise audio timing
