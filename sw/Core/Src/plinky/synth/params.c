@@ -584,6 +584,8 @@ void save_param_index(Param param_id, s8 index) {
 
 void try_left_strip_for_params(u16 position, bool is_press_start) {
 	static const u16 STRIP_DEADZONE = 256;
+	static const float HALF_CENTER_DEADZONE = 32.f;
+
 	// only if editing a parameter
 	if (!EDITING_PARAM)
 		return;
@@ -598,7 +600,7 @@ void try_left_strip_for_params(u16 position, bool is_press_start) {
 	// smooth the pressed value
 	smooth_value(&left_strip_smooth, press_value, 256);
 	float smoothed_value = clampf(left_strip_smooth.y2, (is_signed) ? -RAW_SIZE - 0.1f : 0.f, RAW_SIZE + 0.1f);
-	// value stops exactly halfway when crossing center
+	// value stops exactly at +/- 100%
 	bool notch_at_50 = (selected_param == P_PLAY_SPD || selected_param == P_SMP_STRETCH);
 	if (notch_at_50) {
 		if (smoothed_value < RAW_HALF && left_strip_start > RAW_HALF)
@@ -616,6 +618,18 @@ void try_left_strip_for_params(u16 position, bool is_press_start) {
 	if (param_is_index(selected_param, selected_mod_src, raw)) {
 		u8 range = param_range(selected_param);
 		raw = INDEX_TO_RAW(raw_to_index(raw, range), range);
+	}
+	// apply center deadzone to non-index, signed params (notched params only first half)
+	else if (is_signed && !(notch_at_50 && fabs(smoothed_value) >= RAW_HALF)) {
+		float scale_range = notch_at_50 ? RAW_HALF : RAW_SIZE;
+		float scale_factor = scale_range / (scale_range - HALF_CENTER_DEADZONE);
+		if (smoothed_value < -HALF_CENTER_DEADZONE)
+			smoothed_value = (smoothed_value + HALF_CENTER_DEADZONE) * scale_factor;
+		else if (smoothed_value > HALF_CENTER_DEADZONE)
+			smoothed_value = (smoothed_value - HALF_CENTER_DEADZONE) * scale_factor;
+		else
+			smoothed_value = 0;
+		raw = smoothed_value + (smoothed_value > 0 ? 0.5f : -0.5f);
 	}
 	// save to parameter
 	save_param_raw(selected_param, selected_mod_src, raw);
