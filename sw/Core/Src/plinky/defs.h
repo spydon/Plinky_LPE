@@ -743,7 +743,7 @@ const static char* const param_row_name[R_NUM_ROWS] = {
 // clang-format off
 
 const static char* const param_name[NUM_PARAMS] = {
-   [P_SHAPE] = I_SHAPE "Shape",       		[P_DISTORTION] = I_DISTORT "Distortion",   	[P_PITCH] = I_PIANO "Pitch",         		[P_OCT] = I_OCTAVE "Octave",         	[P_GLIDE] = I_GLIDE "Glide",         		[P_INTERVAL] = I_OFFSET "Interval",			// Sound 1
+   [P_SHAPE] = I_SHAPE "WTable Pos",      	[P_DISTORTION] = I_DISTORT "Distortion",   	[P_PITCH] = I_PIANO "Pitch",         		[P_OCT] = I_OCTAVE "Octave",         	[P_GLIDE] = I_GLIDE "Glide",         		[P_INTERVAL] = I_OFFSET "Interval",			// Sound 1
    [P_NOISE] = I_WAVE "Noise",       		[P_RESO] = I_DISTORT "Resonance",         	[P_DEGREE] = I_OFFSET "Degree",       		[P_SCALE] = I_PIANO "Scale",        	[P_MICROTONE] = I_MICRO "Microtone",     	[P_COLUMN] = I_OFFSET "Column",				// Sound 2
    [P_ENV_LVL1] = I_TOUCH "Sens",			[P_ATTACK1] = I_ADSR_A "Attack",      		[P_DECAY1] = I_ADSR_D "Decay",        		[P_SUSTAIN1] = I_ADSR_S "Sustain",    	[P_RELEASE1] = I_ADSR_R "Release",      	[P_ENV1_UNUSED] = I_CROSS "<unused>",   	// Envelope 1
    [P_ENV_LVL2] = I_AMPLITUDE "Level",  	[P_ATTACK2] = I_ADSR_A "Attack",      		[P_DECAY2] = I_ADSR_D "Decay",        		[P_SUSTAIN2] = I_ADSR_S "Sustain",    	[P_RELEASE2] = I_ADSR_R "Release",      	[P_ENV2_UNUSED] = I_CROSS "<unused>",   	// Envelope 2

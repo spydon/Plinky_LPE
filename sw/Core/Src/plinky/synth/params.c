@@ -1240,6 +1240,10 @@ void draw_cur_param(void) {
 	s16 base_raw = param_val_raw(draw_param, SRC_BASE);
 	if (base_raw < 0) {
 		switch (draw_param) {
+		case P_SHAPE:
+			draw_str(0, 18, F_12_BOLD, I_SHAPE);
+			draw_str(text_x - 1, 20, F_12_BOLD, "PulseWidth");
+			return;
 		case P_SWING:
 			draw_str(0, 18, F_12_BOLD, I_TILT);
 			draw_str(text_x, 18, F_12_BOLD, "Swing 16th");
@@ -1263,12 +1267,17 @@ void draw_cur_param(void) {
 		}
 	}
 
-	// special cases
+	// special incidental  cases
 	u8 range = param_range(draw_param);
 	s8 index = raw_to_index(base_raw, range);
 	if (draw_param == P_SEQ_CLK_DIV && index == range - 1) {
 		draw_str(0, 18, F_12_BOLD, I_JACK);
 		draw_str(text_x, 18, F_12_BOLD, "Trigger");
+		return;
+	}
+	if (draw_param == P_SHAPE && base_raw == 0) {
+		draw_str(0, 18, F_12_BOLD, I_SHAPE);
+		draw_str(text_x, 20, F_12_BOLD, "SuperSaw");
 		return;
 	}
 
