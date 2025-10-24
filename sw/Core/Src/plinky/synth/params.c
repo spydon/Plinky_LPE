@@ -952,8 +952,8 @@ static const char* get_param_str(Param param_id, ModSource mod_src, s16 raw, cha
 		return get_val_str(raw * 1200 >> 10, 2, val_buf, "", true);
 	// free time durations - drawn with a minus sign because they're on the negative range of the param
 	case P_DLY_TIME:
-		// in ms with one decimal
-		static const float DELAY_TIME_FACTOR = 20000.f / SAMPLE_RATE;
+		// in ms with one decimal (delay runs at half sample rate)
+		static const float DELAY_TIME_FACTOR = 10000.f / (SAMPLE_RATE >> 1);
 		u32 delay_time = delay_samples_from_param(-raw << 6) * DELAY_TIME_FACTOR + 0.5f;
 		// smaller than 120ms, one decimal
 		if (delay_time < 1200)
