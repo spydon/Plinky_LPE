@@ -209,20 +209,8 @@ static void apply_subtractive_lpg_noise(u8 voice_id, Voice* voice, float goal_lp
                                         float resonance, u32* dst) {
 	float glide = lpf_k(param_val_poly(P_GLIDE, voice_id) >> 2) * (0.5f / SAMPLES_PER_TICK);
 
-	// oscillator shape
-	s32 osc_shape_raw = cur_preset.params[P_SHAPE][0]; // unmodulated
-	s32 osc_shape = param_val_poly(P_SHAPE, voice_id);
-	// raw from -8 to 7, snap to 0 => supersaw
-	if (osc_shape_raw >= -8 && osc_shape_raw < 8)
-		osc_shape = 0;
-	// raw above 7, clamp to positive => wavetable
-	else if (osc_shape_raw > 0)
-		osc_shape = clampi(osc_shape, 1, 65535);
-	// raw below -8, clamp to negative => pulse wave
-	else
-		osc_shape = clampi(osc_shape, -65535, -1);
-
 	// two loops handling two oscillators each
+	s32 osc_shape = param_val_poly(P_SHAPE, voice_id);
 	float noise;
 	for (u8 osc_id = 0; osc_id < OSCS_PER_VOICE / 2; osc_id++) {
 		s16* osc_dst = ((s16*)dst) + (osc_id & 1);
