@@ -187,6 +187,7 @@ static void draw_visuals(void) {
 		break;
 	case UI_LOAD:
 		u8 xtab = draw_preset_id();
+		draw_ram_save_load();
 		draw_preset_name(xtab);
 		draw_pattern_id(false);
 		draw_sample_id();

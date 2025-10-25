@@ -16,6 +16,10 @@ static u16 long_press_frames = 0;
 static u8 strip_holds_valid_action = 0; // mask
 static u8 strip_is_action_pressed = 0;  // mask
 
+void clear_long_press(void) {
+	long_press_frames = 0;
+}
+
 void handle_pad_actions(u8 strip_id, Touch* strip_cur) {
 	Touch* strip_2back = get_touch_prev(strip_id, 2);
 	u8 strip_mask = 1 << strip_id;
@@ -119,9 +123,9 @@ void handle_pad_actions(u8 strip_id, Touch* strip_cur) {
 				seq_set_end(pad_y * 8 + strip_id);
 			break;
 		case UI_LOAD:
-			if (is_press_start) {
+			if (pad_id >= NUM_PRESETS && is_press_start) {
 				touch_load_item(pad_id);
-				cue_ram_item(pad_id, long_press_pad);
+				cue_ram_item(pad_id);
 			}
 			break;
 		case UI_SETTINGS_MENU:
@@ -159,9 +163,9 @@ void handle_pad_action_long_presses(void) {
 		// sample pad (strip 7), load sample and enter sample edit mode (belongs in sampler)
 		if (strip_id == 7)
 			open_sampler(pad_id & 7);
-		// patch or pattern, request copy
+		// patch or pattern, save or load
 		else
-			copy_load_item(pad_id);
+			save_load_ram_item(pad_id);
 	}
 }
 

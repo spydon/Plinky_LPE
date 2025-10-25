@@ -83,9 +83,12 @@ void shift_set_state(ShiftState new_state) {
 		ui_mode = mode_a ? UI_EDITING_A : UI_EDITING_B;
 		break;
 	case SS_LOAD:
-		// activate preset load screen
-		ui_mode = UI_LOAD;
-		touch_load_item(cur_preset_id);
+		if (ui_mode != UI_LOAD) {
+			// activate preset load screen
+			ui_mode = UI_LOAD;
+			touch_load_item(cur_preset_id);
+		}
+		clear_long_press();
 		break;
 	case SS_LEFT:
 		// edit start of sequencer pattern
@@ -172,8 +175,9 @@ void shift_release_state(void) {
 		ui_mode = UI_DEFAULT;
 		break;
 	case SS_LOAD:
-		if (action_pressed_during_shift || prev_ui_mode == ui_mode)
+		if (prev_ui_mode == ui_mode && !action_pressed_during_shift)
 			ui_mode = UI_DEFAULT;
+		clear_long_press();
 		break;
 	case SS_LEFT:
 		// short left press
@@ -236,9 +240,12 @@ void shift_release_state(void) {
 void shift_hold_state(void) {
 	switch (ui_mode) {
 	case UI_LOAD:
+		// an ss_load hold keeps ui_load open (simulate an action press)
+		if (shift_state == SS_LOAD && shift_state_frames == 32)
+			action_pressed_during_shift = true;
 		// after a delay, clear the last touched load item
-		if ((shift_state == SS_CLEAR) && (shift_state_frames > 64 + 4))
-			clear_load_item();
+		if ((shift_state == SS_CLEAR) && (shift_state_frames == 64 + 4))
+			clear_ram_item();
 		break;
 	case UI_SAMPLE_EDIT:
 		// long-pressing record or play in sampler preview mode records a new sample

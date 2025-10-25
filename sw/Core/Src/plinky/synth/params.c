@@ -257,8 +257,6 @@ void init_presets(void) {
 
 	// finish up
 	if (presets_updated) {
-		// reload preset with updated values
-		load_preset(cur_preset_id, true);
 		HAL_Delay(200);
 		oled_clear();
 		draw_str_ctr(0, font, "updated");
@@ -561,9 +559,6 @@ void save_param_raw(Param param_id, ModSource mod_src, s16 data) {
 	}
 	// don't save if no change
 	if (data == cur_preset.params[param_id][mod_src])
-		return;
-	// don't save if ram not ready
-	if (!update_preset_ram(false))
 		return;
 	// save
 	cur_preset.params[param_id][mod_src] = data;

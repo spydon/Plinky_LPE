@@ -14,13 +14,13 @@ extern bool flash_busy;
 
 void check_bootloader_flash(void);
 void init_flash();
-void flash_toggle_preset(u8 preset_id);
 
 // flash pointers
 
 const Preset* preset_flash_ptr(u8 preset_id);
-PatternQuarter* ptn_quarter_flash_ptr(u8 quarter_id);
-SampleInfo* sample_info_flash_ptr(u8 sample0);
+const Preset* cur_preset_flash_ptr();
+const PatternQuarter* ptn_quarter_flash_ptr(u8 quarter_id);
+const SampleInfo* sample_info_flash_ptr(u8 sample0);
 
 // writing flash
 
