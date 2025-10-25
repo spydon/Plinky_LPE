@@ -216,8 +216,8 @@ static void process_midi_msg(u8 status, u8 d1, u8 d2) {
 
 	switch (type) {
 	case MIDI_PROGRAM_CHANGE:
-		if (d1 < 32)
-			load_preset(d1, false);
+		if (d1 < NUM_PRESETS)
+			cue_ram_item(d1);
 		break;
 	// note related: to the strings!
 	case MIDI_NOTE_OFF:

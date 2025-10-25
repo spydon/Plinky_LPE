@@ -35,7 +35,6 @@ const static u64 MAGIC = 0xf00dcafe473ff02a;
 const static u8 CALIB_PAGE = 255;
 
 static u8 latest_page_id[NUM_FLASH_ITEMS] = {};
-static u8 backup_page_id[NUM_PRESETS] = {};
 static u8 next_free_page = 0;
 static u32 next_seq = 0;
 
@@ -64,7 +63,14 @@ const Preset* preset_flash_ptr(u8 preset_id) {
 	return (Preset*)fp;
 }
 
-PatternQuarter* ptn_quarter_flash_ptr(u8 quarter_id) {
+const Preset* cur_preset_flash_ptr() {
+	FlashPage* fp = flash_page_ptr(latest_page_id[FLOAT_PRESET_ID]);
+	if (fp->footer.idx != FLOAT_PRESET_ID || fp->footer.version != FOOTER_VERSION)
+		return 0;
+	return (Preset*)fp;
+}
+
+const PatternQuarter* ptn_quarter_flash_ptr(u8 quarter_id) {
 	if (quarter_id >= NUM_PTN_QUARTERS)
 		return (PatternQuarter*)zero;
 	FlashPage* fp = flash_page_ptr(latest_page_id[PATTERNS_START + quarter_id]);
@@ -73,7 +79,7 @@ PatternQuarter* ptn_quarter_flash_ptr(u8 quarter_id) {
 	return (PatternQuarter*)fp;
 }
 
-SampleInfo* sample_info_flash_ptr(u8 sample0) {
+const SampleInfo* sample_info_flash_ptr(u8 sample0) {
 	if (sample0 >= NUM_SAMPLES)
 		return (SampleInfo*)zero;
 	FlashPage* fp = flash_page_ptr(latest_page_id[F_SAMPLES_START + sample0]);
@@ -197,7 +203,6 @@ void check_bootloader_flash(void) {
 void init_flash() {
 	u8 dummy_page = 0;
 	memset(latest_page_id, dummy_page, sizeof(latest_page_id));
-	memset(backup_page_id, dummy_page, sizeof(backup_page_id));
 	u32 highest_seq = 0;
 	next_free_page = 0;
 	memset(&sys_params, 0, sizeof(sys_params));
@@ -217,9 +222,6 @@ void init_flash() {
 				for (u8 i = 0; i < NUM_FLASH_ITEMS; ++i)
 					if (latest_page_id[i] == dummy_page)
 						latest_page_id[i]++;
-				for (u8 i = 0; i < NUM_PRESETS; ++i)
-					if (backup_page_id[i] == dummy_page)
-						backup_page_id[i]++;
 				dummy_page++;
 			}
 			continue;
@@ -234,13 +236,6 @@ void init_flash() {
 			latest_page_id[i] = page;
 	}
 	next_seq = highest_seq + 1;
-	memcpy(backup_page_id, latest_page_id, sizeof(backup_page_id));
-}
-
-void flash_toggle_preset(u8 preset_id) {
-	u8 temp = backup_page_id[preset_id];
-	backup_page_id[preset_id] = latest_page_id[preset_id];
-	latest_page_id[preset_id] = temp;
 }
 
 // writing flash
@@ -264,7 +259,7 @@ void flash_write_block(void* dst, const void* src, int size) {
 	}
 }
 
-void flash_write_page(const void* src, u32 size, u8 page_id) {
+void flash_write_page(const void* src, u32 size, u8 item_id) {
 	flash_busy = true;
 	HAL_FLASH_Unlock();
 	bool in_use;
@@ -272,7 +267,6 @@ void flash_write_page(const void* src, u32 size, u8 page_id) {
 		FlashPage* p = flash_page_ptr(next_free_page);
 		in_use = next_free_page == 255;
 		in_use |= (p->footer.idx < NUM_FLASH_ITEMS && latest_page_id[p->footer.idx] == next_free_page);
-		in_use |= (p->footer.idx < NUM_PRESETS && backup_page_id[p->footer.idx] == next_free_page);
 		if (in_use)
 			++next_free_page;
 	} while (in_use);
@@ -282,13 +276,13 @@ void flash_write_page(const void* src, u32 size, u8 page_id) {
 	flash_write_block(dst, src, size);
 	flash_write_block(dst + FLASH_PAGE_SIZE - sizeof(SysParams) - sizeof(PageFooter), &sys_params, sizeof(SysParams));
 	PageFooter footer;
-	footer.idx = page_id;
+	footer.idx = item_id;
 	footer.seq = next_seq++;
 	footer.version = FOOTER_VERSION;
 	footer.crc = compute_hash(dst, 2040);
 	flash_write_block(dst + 2040, &footer, 8);
 	HAL_FLASH_Lock();
-	latest_page_id[page_id] = flash_page;
+	latest_page_id[item_id] = flash_page;
 	flash_busy = false;
 }
 

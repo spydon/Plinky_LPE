@@ -2,6 +2,7 @@
 #include "flash.h"
 #include "gfx/gfx.h"
 #include "synth/params.h"
+#include "ui/shift_states.h"
 
 // cleanup
 #include "hardware/codec.h"
@@ -32,7 +33,7 @@ static u8 ram_pattern_id = 255;
 static u8 ram_sample_id = 255;
 
 // ram item contents
-Preset cur_preset;
+Preset cur_preset; // floating preset, the one we edit and use for sound generation
 static PatternQuarter cur_ptn_quarter[4];
 SampleInfo cur_sample_info;
 
@@ -42,16 +43,10 @@ static u8 cued_pattern_id = 255;
 static u8 cued_sample_id = 255;
 
 // history of above, used to check double press on the same item
-static u8 prev_cued_preset_id = 255;
 static u8 prev_cued_pattern_id = 255;
 static u8 prev_cued_sample_id = 255;
 
-// item to copy from
-static u8 copy_preset_id = 0;
-static u8 copy_pattern_id = 0;
-static u8 copy_sample_id = 0;
-
-static u8 edit_item_id = 255;   // ram item to edit | msb unset => copy or toggle, msb set => clear
+static u8 edit_item_id = 255;   // ram item to edit | msb unset => save, msb set => clear
 static u8 recent_load_item = 0; // the most recently touched load item
 
 static u32 last_ram_write[NUM_RAM_SEGMENTS];
@@ -120,6 +115,7 @@ void init_ram(void) {
 		sys_params.accel_sens = 150; // 100%
 		sys_params.cv_quant = CVQ_OFF;
 		sys_params.reverse_encoder = false;
+		sys_params.preset_aligned = false;
 		sys_params.paddy = 0;
 		memset(sys_params.pad, 0, sizeof(sys_params.pad));
 		sys_params.version = REV_SYS_PARAMS_VERSION;
@@ -142,6 +138,12 @@ void init_ram(void) {
 	}
 	codec_update_volume();
 	cur_preset_id = sys_params.preset_id;
+	// load floating preset
+	const Preset* cur_preset_ptr = cur_preset_flash_ptr();
+	if (cur_preset_ptr) {
+		memcpy(&cur_preset, cur_preset_ptr, sizeof(Preset));
+		ram_preset_id = sys_params.preset_id;
+	}
 	recent_load_item = cur_preset_id;
 	ram_initialized = true;
 }
@@ -194,48 +196,49 @@ void ram_frame(void) {
 			edit_item_id &= 63;
 			switch (item_type) {
 			case RAM_PRESET:
-				memcpy(&cur_preset, init_params_ptr(), sizeof(cur_preset));
-				last_ram_write[SEG_PRESET] = now;
+				// clear floating preset
+				memcpy(&cur_preset, init_params_ptr(), sizeof(Preset));
+				log_ram_edit(SEG_PRESET);
+				// write floating preset to preset slot
+				flash_write_page(&cur_preset, sizeof(Preset), edit_item_id);
+				// update state
+				cur_preset_id = edit_item_id;
+				ram_preset_id = edit_item_id;
+				if (!sys_params.preset_aligned) {
+					sys_params.preset_aligned = true;
+					log_ram_edit(SEG_SYS);
+				}
 				break;
 			case RAM_PATTERN:
 				memset(&cur_ptn_quarter, 0, sizeof(cur_ptn_quarter));
-				last_ram_write[SEG_PAT0] = now;
-				last_ram_write[SEG_PAT1] = now;
-				last_ram_write[SEG_PAT2] = now;
-				last_ram_write[SEG_PAT3] = now;
+				log_ram_edit(SEG_PAT0);
+				log_ram_edit(SEG_PAT1);
+				log_ram_edit(SEG_PAT2);
+				log_ram_edit(SEG_PAT3);
 				break;
 			case RAM_SAMPLE:
 				memset(&cur_sample_info, 0, sizeof(SampleInfo));
-				last_ram_write[SEG_SAMPLE] = now;
+				log_ram_edit(SEG_SAMPLE);
 				break;
 			default:
 				break;
 			}
 		}
-		// msb not set, preset tries to copy to itself => toggle
-		else if (edit_item_id == copy_preset_id) {
-			// flush any writes
-			last_flash_write[SEG_SYS] = last_ram_write[SEG_SYS];
-			last_flash_write[SEG_PRESET] = last_ram_write[SEG_PRESET];
-			flash_write_page(&cur_preset, sizeof(Preset), ram_preset_id);
-			// -- flush any writes
-			flash_toggle_preset(copy_preset_id);
-			memcpy(&cur_preset, preset_flash_ptr(cur_preset_id), sizeof(cur_preset));
-			load_preset(edit_item_id, true);
-		}
-		// msb not set, not a toggle => copy
+		// msb not set => save
 		else {
 			switch (item_type) {
 			case RAM_PRESET:
-				flash_write_page(preset_flash_ptr(copy_preset_id), sizeof(Preset), edit_item_id);
-				load_preset(edit_item_id, true);
+				// write floating preset to selected preset slot
+				flash_write_page(&cur_preset, sizeof(Preset), edit_item_id);
+				// make selected preset active - the fast loop will retrieve this when necessary
+				cur_preset_id = edit_item_id;
 				break;
 			case RAM_PATTERN: {
-				u8 src_page = 4 * copy_pattern_id;
-				u8 dst_page = 4 * (edit_item_id - PATTERNS_START) + PATTERNS_START;
-				for (u8 qtr = 0; qtr < 4; ++qtr)
-					flash_write_page(ptn_quarter_flash_ptr(src_page + qtr), sizeof(PatternQuarter), dst_page + qtr);
-				save_param_index(P_PATTERN, edit_item_id - PATTERNS_START);
+				// u8 src_page = 4 * copy_pattern_id;
+				// u8 dst_page = 4 * (edit_item_id - PATTERNS_START) + PATTERNS_START;
+				// for (u8 qtr = 0; qtr < 4; ++qtr)
+				// 	flash_write_page(ptn_quarter_flash_ptr(src_page + qtr), sizeof(PatternQuarter), dst_page + qtr);
+				// save_param_index(P_PATTERN, edit_item_id - PATTERNS_START);
 			} break;
 			default:
 				// samples don't copy
@@ -264,7 +267,7 @@ void ram_frame(void) {
 	if (need_flash_write(SEG_PRESET, now) || need_flash_write(SEG_SYS, now)) {
 		last_flash_write[SEG_SYS] = last_ram_write[SEG_SYS];
 		last_flash_write[SEG_PRESET] = last_ram_write[SEG_PRESET];
-		flash_write_page(&cur_preset, sizeof(Preset), ram_preset_id);
+		flash_write_page(&cur_preset, sizeof(Preset), FLOAT_PRESET_ID);
 	}
 }
 
@@ -275,25 +278,29 @@ static bool segment_outdated(RamSegment seg) {
 }
 
 void log_ram_edit(RamSegment segment) {
+	if (segment == SEG_PRESET && sys_params.preset_aligned) {
+		sys_params.preset_aligned = false;
+		last_ram_write[SEG_SYS] = millis();
+	}
 	last_ram_write[segment] = millis();
 }
 
-bool update_preset_ram(bool force) {
+void update_preset_ram(bool force) {
 	if (!ram_initialized)
-		return false;
+		return;
 	// already up to date
 	if (!preset_outdated() && !force)
-		return true;
+		return;
 	// flash is not ready
 	if (flash_busy || segment_outdated(SEG_PRESET))
-		return false;
+		return;
 	// retrieve preset from flash
 	clear_latch();
-	memcpy(&cur_preset, preset_flash_ptr(cur_preset_id), sizeof(cur_preset));
+	memcpy(&cur_preset, preset_flash_ptr(cur_preset_id), sizeof(Preset));
 	ram_preset_id = cur_preset_id;
 	sys_params.preset_id = cur_preset_id;
+	sys_params.preset_aligned = true;
 	log_ram_edit(SEG_SYS);
-	return true;
 }
 
 void update_pattern_ram(bool force) {
@@ -351,20 +358,27 @@ void touch_load_item(u8 item_id) {
 }
 
 // line up recent_load_item to be cleared during the next tick
-void clear_load_item(void) {
+void clear_ram_item(void) {
 	edit_item_id = recent_load_item | 128;
 }
 
-// line up item_id to be copied during the next tick
-void copy_load_item(u8 item_id) {
-	edit_item_id = item_id;
+void save_load_ram_item(u8 item_id) {
+	// holding shift pad: save preset
+	if (shift_state == SS_LOAD)
+		edit_item_id = item_id;
+	// not holding shift pad: cue preset for loading
+	else {
+		touch_load_item(item_id);
+		cue_ram_item(item_id);
+	}
+	ui_mode = UI_DEFAULT;
 }
 
 // returns true if there's a chance this made changes to the sequencer
 bool apply_cued_load_items(void) {
 	bool possible_seq_changes = false;
 	if (cued_preset_id != 255) {
-		load_preset(cued_preset_id, false);
+		load_preset(cued_preset_id, true);
 		cued_preset_id = 255;
 		possible_seq_changes = true;
 	}
@@ -380,36 +394,40 @@ bool apply_cued_load_items(void) {
 	return possible_seq_changes;
 }
 
-void cue_ram_item(u8 item_id, u8 long_press_pad) {
+void cue_ram_item(u8 item_id) {
 	// triggered on touch start:
-	// - save currently active item as source for copying
 	// - save what was cued into prev_cued, if they end up the same this is a double press
 	// - save touched pad as cued item
-	RamItemType item_type = get_item_type(item_id);
-	if (item_type == get_item_type(long_press_pad)) {
-		switch (item_type) {
-		case RAM_PRESET:
-			copy_preset_id = cur_preset_id;
-			prev_cued_preset_id = cued_preset_id;
-			cued_preset_id = item_id;
-			break;
-		case RAM_PATTERN: {
-			copy_pattern_id = cur_pattern_id;
-			prev_cued_pattern_id = cued_pattern_id;
-			cued_pattern_id = item_id - PATTERNS_START;
-			break;
+	switch (get_item_type(item_id)) {
+	case RAM_PRESET:
+		// want to cue current preset => cancel cue
+		if (item_id == cur_preset_id && sys_params.preset_aligned) {
+			cued_preset_id = 255;
+			return;
 		}
-		case RAM_SAMPLE: {
-			copy_sample_id = cur_sample_id;
-			prev_cued_sample_id = cued_sample_id;
-			// pressing the current sample cues turning it off
-			u8 sample_id = item_id - SAMPLES_START;
-			cued_sample_id = (sample_id == cur_sample_id) ? NUM_SAMPLES : sample_id;
-			break;
+		// load immediately
+		if (!seq_playing() || item_id == cued_preset_id) {
+			cur_preset_id = item_id;
+			update_preset_ram(true);
+			return;
 		}
-		default:
-			break;
-		}
+		// cue
+		cued_preset_id = item_id;
+		break;
+	case RAM_PATTERN: {
+		prev_cued_pattern_id = cued_pattern_id;
+		cued_pattern_id = item_id - PATTERNS_START;
+		break;
+	}
+	case RAM_SAMPLE: {
+		prev_cued_sample_id = cued_sample_id;
+		// pressing the current sample cues turning it off
+		u8 sample_id = item_id - SAMPLES_START;
+		cued_sample_id = (sample_id == cur_sample_id) ? NUM_SAMPLES : sample_id;
+		break;
+	}
+	default:
+		break;
 	}
 }
 
@@ -419,12 +437,6 @@ void try_apply_cued_ram_item(u8 item_id) {
 	// 2a. is the sequencer not playing? (save to make changes)
 	// 2b. or, was the same ram item pressed twice in a row? (force change while sequencer plays)
 	switch (get_item_type(item_id)) {
-	case RAM_PRESET:
-		if (cued_preset_id != 255 && (!seq_playing() || cued_preset_id == prev_cued_preset_id)) {
-			load_preset(cued_preset_id, false);
-			cued_preset_id = 255;
-		}
-		break;
 	case RAM_PATTERN:
 		if (cued_pattern_id != 255 && (!seq_playing() || cued_pattern_id == prev_cued_pattern_id)) {
 			save_param_index(P_PATTERN, cued_pattern_id);
@@ -443,14 +455,15 @@ void try_apply_cued_ram_item(u8 item_id) {
 }
 
 u8 draw_cued_preset_id(void) {
-	if (cued_preset_id != 255 && cued_preset_id != cur_preset_id)
-		return fdraw_str(0, 0, F_20_BOLD, "%c%d->%d", I_PRESET[0], cur_preset_id + 1, cued_preset_id + 1);
+	if (cued_preset_id != 255)
+		return fdraw_str(0, 0, F_20_BOLD, "%c%d%s->%d", I_PRESET[0], cur_preset_id + 1,
+		                 sys_params.preset_aligned ? "" : ".", cued_preset_id + 1);
 	else
 		return 0;
 }
 
 u8 draw_preset_id(void) {
-	return fdraw_str(0, 0, F_20_BOLD, I_PRESET "%d", cur_preset_id + 1);
+	return fdraw_str(0, 0, F_20_BOLD, I_PRESET "%d%s", cur_preset_id + 1, sys_params.preset_aligned ? "" : ".");
 }
 
 void draw_preset_name(u8 xtab) {
@@ -483,11 +496,11 @@ void draw_sample_id(void) {
 void draw_select_load_item(u8 item_id, bool done) {
 	switch (get_item_type(item_id)) {
 	case RAM_PRESET:
-		if (item_id == copy_preset_id)
-			fdraw_str(0, 0, F_16_BOLD, done ? "toggled\n" I_PRESET "Preset %d" : "toggle\n" I_PRESET "Preset %d?",
+		if (shift_state == SS_LOAD)
+			fdraw_str(0, 0, F_16_BOLD, done ? "Saved\n " I_PRESET "preset %d" : "Save\n" I_PRESET "preset %d?",
 			          item_id + 1);
 		else
-			fdraw_str(0, 0, F_16_BOLD, done ? "copied to " I_PRESET "%d" : "copy over\n" I_PRESET "Preset %d?",
+			fdraw_str(0, 0, F_16_BOLD, done ? "Loaded\n " I_PRESET "preset %d" : "Load\n" I_PRESET "preset %d?",
 			          item_id + 1);
 		break;
 	case RAM_PATTERN:
@@ -519,6 +532,15 @@ void draw_clear_load_item(bool done) {
 	default:
 		break;
 	}
+}
+
+void draw_ram_save_load(void) {
+	const u8 x0 = 101;
+	const u8 x1 = OLED_WIDTH - 1;
+	fdraw_str(x0 + 5, 1, F_8_BOLD, "%s", shift_state == SS_LOAD ? "SAVE" : "LOAD");
+	vline(x0, 0, 9, 1);
+	vline(x1, 0, 9, 1);
+	hline(x0, 9, x1 + 1, 1);
 }
 
 u8 ui_load_led(u8 x, u8 y, u8 pulse) {

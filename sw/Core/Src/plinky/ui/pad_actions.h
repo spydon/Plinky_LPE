@@ -6,6 +6,9 @@
 
 extern u8 long_press_pad;
 
+// utils
+void clear_long_press(void);
+
 // main
 
 void handle_pad_actions(u8 strip_id, Touch* strip_cur);
