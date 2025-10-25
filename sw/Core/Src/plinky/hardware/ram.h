@@ -6,6 +6,7 @@
 
 extern SysParams sys_params;
 
+extern u8 cur_preset_id;
 extern u8 cur_sample_id;           // possibly remove after SPI cleanup
 extern Preset cur_preset;          // could be made local by optimizing sequencer & modulation
 extern SampleInfo cur_sample_info; // possibly give sampler its own copy

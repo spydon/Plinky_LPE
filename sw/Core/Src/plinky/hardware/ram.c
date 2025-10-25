@@ -18,10 +18,11 @@ typedef enum RamItemType {
 	NUM_ITEM_TYPES,
 } RamItemType;
 
+static bool ram_initialized = false;
 SysParams sys_params;
 
 // item we are (or want to be) editing
-// u8 cur_preset_id ?
+u8 cur_preset_id;
 static u8 cur_pattern_id = 0;
 u8 cur_sample_id = 0;
 
@@ -67,7 +68,7 @@ static RamItemType get_item_type(u8 item_id) {
 
 // when the current item is not equal to the item in ram, this indicates we're still writing the old ram item to flash
 static bool preset_outdated(void) {
-	return sys_params.preset_id != ram_preset_id;
+	return cur_preset_id != ram_preset_id;
 }
 bool pattern_outdated(void) {
 	return cur_pattern_id != ram_pattern_id;
@@ -140,7 +141,9 @@ void init_ram(void) {
 		HAL_Delay(2000);
 	}
 	codec_update_volume();
-	recent_load_item = sys_params.preset_id;
+	cur_preset_id = sys_params.preset_id;
+	recent_load_item = cur_preset_id;
+	ram_initialized = true;
 }
 
 static bool need_flash_write(RamSegment seg, u32 now) {
@@ -217,7 +220,7 @@ void ram_frame(void) {
 			flash_write_page(&cur_preset, sizeof(Preset), ram_preset_id);
 			// -- flush any writes
 			flash_toggle_preset(copy_preset_id);
-			memcpy(&cur_preset, preset_flash_ptr(sys_params.preset_id), sizeof(cur_preset));
+			memcpy(&cur_preset, preset_flash_ptr(cur_preset_id), sizeof(cur_preset));
 			load_preset(edit_item_id, true);
 		}
 		// msb not set, not a toggle => copy
@@ -276,6 +279,8 @@ void log_ram_edit(RamSegment segment) {
 }
 
 bool update_preset_ram(bool force) {
+	if (!ram_initialized)
+		return false;
 	// already up to date
 	if (!preset_outdated() && !force)
 		return true;
@@ -283,8 +288,11 @@ bool update_preset_ram(bool force) {
 	if (flash_busy || segment_outdated(SEG_PRESET))
 		return false;
 	// retrieve preset from flash
-	memcpy(&cur_preset, preset_flash_ptr(sys_params.preset_id), sizeof(cur_preset));
-	ram_preset_id = sys_params.preset_id;
+	clear_latch();
+	memcpy(&cur_preset, preset_flash_ptr(cur_preset_id), sizeof(cur_preset));
+	ram_preset_id = cur_preset_id;
+	sys_params.preset_id = cur_preset_id;
+	log_ram_edit(SEG_SYS);
 	return true;
 }
 
@@ -322,12 +330,10 @@ void update_sample_ram(bool force) {
 // == SAVE / LOAD == //
 
 void load_preset(u8 preset_id, bool force) {
-	if (preset_id == sys_params.preset_id && !force)
+	if (preset_id == cur_preset_id && !force)
 		return;
-	sys_params.preset_id = preset_id;
-	log_ram_edit(SEG_SYS);
+	cur_preset_id = preset_id;
 	update_preset_ram(force);
-	clear_latch();
 }
 
 // rj: this function is exclusively used by open_sampler, we might want to look at using the regular loading
@@ -383,7 +389,7 @@ void cue_ram_item(u8 item_id, u8 long_press_pad) {
 	if (item_type == get_item_type(long_press_pad)) {
 		switch (item_type) {
 		case RAM_PRESET:
-			copy_preset_id = sys_params.preset_id;
+			copy_preset_id = cur_preset_id;
 			prev_cued_preset_id = cued_preset_id;
 			cued_preset_id = item_id;
 			break;
@@ -437,14 +443,14 @@ void try_apply_cued_ram_item(u8 item_id) {
 }
 
 u8 draw_cued_preset_id(void) {
-	if (cued_preset_id != 255 && cued_preset_id != sys_params.preset_id)
-		return fdraw_str(0, 0, F_20_BOLD, "%c%d->%d", I_PRESET[0], sys_params.preset_id + 1, cued_preset_id + 1);
+	if (cued_preset_id != 255 && cued_preset_id != cur_preset_id)
+		return fdraw_str(0, 0, F_20_BOLD, "%c%d->%d", I_PRESET[0], cur_preset_id + 1, cued_preset_id + 1);
 	else
 		return 0;
 }
 
 u8 draw_preset_id(void) {
-	return fdraw_str(0, 0, F_20_BOLD, I_PRESET "%d", sys_params.preset_id + 1);
+	return fdraw_str(0, 0, F_20_BOLD, I_PRESET "%d", cur_preset_id + 1);
 }
 
 void draw_preset_name(u8 xtab) {
@@ -530,7 +536,7 @@ u8 ui_load_led(u8 x, u8 y, u8 pulse) {
 		k = pulse;
 
 	// full selected load item
-	if (item_id == sys_params.preset_id)
+	if (item_id == cur_preset_id)
 		k = 255;
 	if (item_id == PATTERNS_START + cur_pattern_id)
 		k = 255;
