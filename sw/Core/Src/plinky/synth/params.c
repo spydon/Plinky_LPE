@@ -258,7 +258,7 @@ void init_presets(void) {
 	// finish up
 	if (presets_updated) {
 		// reload preset with updated values
-		load_preset(sys_params.preset_id, true);
+		load_preset(cur_preset_id, true);
 		HAL_Delay(200);
 		oled_clear();
 		draw_str_ctr(0, font, "updated");
