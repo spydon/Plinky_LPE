@@ -178,9 +178,10 @@ bool mod_action_pressed(void) {
 
 // returns whether this produced screen-filling graphics
 bool pad_actions_oled_visuals(void) {
-	if (ui_mode == UI_LOAD && long_press_frames >= 32) {
-		draw_select_load_item(long_press_pad, long_press_frames - 32 > 128);
-		inverted_rectangle(0, 0, long_press_frames - 32, 32);
+	u8 delay = long_press_pad >= SAMPLES_START ? 32 : 1;
+	if (ui_mode == UI_LOAD && long_press_frames >= delay) {
+		draw_select_load_item(long_press_pad, long_press_frames - delay > 128);
+		inverted_rectangle(0, 0, long_press_frames - delay, 32);
 		return true;
 	}
 	return false;
