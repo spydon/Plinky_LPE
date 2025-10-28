@@ -9,7 +9,6 @@
 #include "synth/strings.h"
 // -- cleanup
 
-#define SYS_PARAMS_VERSION 2
 #define NUM_RAM_ITEMS (NUM_PRESETS + NUM_PATTERNS + NUM_SAMPLES)
 
 typedef enum RamItemType {
@@ -110,7 +109,7 @@ void init_ram(void) {
 	// update sys params
 	Font font = F_16;
 	switch (sys_params.version) {
-	case SYS_PARAMS_VERSION:
+	case LPE_SYS_PARAMS_VERSION:
 		// correct!
 		break;
 	case OG_SYS_PARAMS_VERSION:
@@ -131,7 +130,7 @@ void init_ram(void) {
 		sys_params.volume_msb = (og_vol >> 8) & 7;
 
 		// finalize
-		sys_params.version = SYS_PARAMS_VERSION;
+		sys_params.version = LPE_SYS_PARAMS_VERSION;
 		log_ram_edit(SEG_SYS);
 		HAL_Delay(500);
 		oled_clear();
