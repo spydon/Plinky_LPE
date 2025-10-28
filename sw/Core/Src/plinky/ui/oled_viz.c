@@ -186,10 +186,19 @@ static void draw_visuals(void) {
 		seq_ptn_end_visuals();
 		break;
 	case UI_LOAD:
-		u8 xtab = draw_preset_id();
 		draw_ram_save_load();
+
+		// top-left, priority: cued preset, current preset
+		u8 xtab = draw_cued_preset_id();
+		if (!xtab)
+			xtab = draw_preset_id();
 		draw_preset_name(xtab);
-		draw_pattern_id(false);
+
+		// bottom left priority: cued pattern, current pattern
+		xtab = draw_cued_pattern_id(param_index(P_ARP_TGL));
+		if (!xtab)
+			draw_pattern_id(param_index(P_ARP_TGL));
+
 		draw_sample_id();
 		break;
 	case UI_SAMPLE_EDIT:
