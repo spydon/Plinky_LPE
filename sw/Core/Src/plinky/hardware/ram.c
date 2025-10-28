@@ -264,8 +264,7 @@ void ram_frame(void) {
 				break;
 			}
 		}
-		edit_item_id = 255;   // clear edit item
-		ui_mode = UI_DEFAULT; // always return to default ui after an edit action
+		edit_item_id = 255; // clear edit item
 	}
 
 	// write ram items to flash (auto-save)
@@ -409,7 +408,6 @@ void save_load_ram_item(u8 item_id) {
 		touch_load_item(item_id);
 		cue_ram_item(item_id);
 	}
-	ui_mode = UI_DEFAULT;
 }
 
 // returns true if there's a chance this made changes to the sequencer
