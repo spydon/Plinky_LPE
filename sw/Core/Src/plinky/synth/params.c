@@ -1422,11 +1422,14 @@ s16 value_editor_column_led(u8 y) {
 }
 
 u8 ui_editing_led(u8 x, u8 y, u8 pulse) {
+	// no leds if no param is selected
+	if (param_snap >= NUM_PARAMS)
+		return 0;
+
 	u8 k = 0;
-	if (x == 0) {
-		if (param_snap < NUM_PARAMS)
-			k = value_editor_column_led(y);
-	}
+	if (x == 0)
+		// edit strip
+		k = value_editor_column_led(y);
 	else if (x < 7) {
 		u8 pAorB = x - 1 + y * 12 + (ui_mode == UI_EDITING_B ? 6 : 0);
 		// holding down a mod source => light up params that are modulated by it
