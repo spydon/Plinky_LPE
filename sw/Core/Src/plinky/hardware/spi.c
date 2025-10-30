@@ -1,5 +1,6 @@
 #include "spi.h"
-#include "hardware/expander.h"
+#include "expander.h"
+#include "memory.h"
 #include "synth/sampler.h"
 
 extern SPI_HandleTypeDef hspi2;
@@ -160,7 +161,7 @@ again:
 
 void spi_tick(void) {
 	if (spi_state == 0) {
-		if (using_sampler())
+		if (USING_SAMPLER)
 			spi_readgrain_dma(0); // kick off the dma for next time
 		else
 			spi_update_dac(0); // just update dac when not in sampler mode

@@ -21,6 +21,7 @@
 #define SAMPLES_PER_TICK 64
 #define TICK_RATE (1.f * SAMPLE_RATE / SAMPLES_PER_TICK)
 #define TICK_LENGTH_MS (1000.f * SAMPLES_PER_TICK / SAMPLE_RATE)
+#define MAX_SAMPLE_LEN (1024 * 1024 * 2) // max sample length in samples
 
 // SYNTH
 
@@ -47,7 +48,7 @@
 
 // PARAMS
 
-#define RAW_SIZE 1024 // range of a parameter - make local after param cleanups
+#define RAW_SIZE 1024
 #define RAW_HALF (RAW_SIZE / 2)
 
 // MEMORY

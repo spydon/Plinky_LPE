@@ -1,17 +1,26 @@
 #include "memory.h"
+#include "codec.h"
 #include "gfx/gfx.h"
 #include "synth/audio.h"
 #include "synth/params.h"
+#include "synth/sequencer.h"
+#include "synth/strings.h"
 #include "ui/shift_states.h"
 
 // cleanup
 #include "adc_dac.h"
-#include "hardware/codec.h"
-#include "synth/sequencer.h"
-#include "synth/strings.h"
 #include "touchstrips.h"
 // -- cleanup
 
+// == DEFINES == //
+
+#define FLASH_START 0x08000000
+#define FLASH_PAGE_USABLE (FLASH_PAGE_SIZE - sizeof(SysParams) - sizeof(PageFooter))
+#define FLASH_PAGE_PTR(page_id) ((FlashPage*)((FLASH_START + 256 * FLASH_PAGE_SIZE) + (page_id) * FLASH_PAGE_SIZE))
+#define LATEST_FLASH_PTR(page_id) FLASH_PAGE_PTR(lastest_flash_page_id[page_id])
+#define FOOTER_VERSION 2
+#define CALIB_PAGE 255
+#define MAGIC ((u64)0xf00dcafe473ff02a)
 #define NUM_RAM_ITEMS (NUM_PRESETS + NUM_PATTERNS + NUM_SAMPLES)
 
 // == TYPEDEFS == //
@@ -31,7 +40,7 @@ typedef struct PageFooter {
 
 typedef struct FlashPage {
 	union {
-		u8 raw[FLASH_PAGE_SIZE - sizeof(SysParams) - sizeof(PageFooter)];
+		u8 raw[FLASH_PAGE_USABLE];
 		Preset preset;
 		PatternQuarter pattern_quarter;
 		SampleInfo sample_info;
@@ -39,18 +48,10 @@ typedef struct FlashPage {
 	SysParams sys_params;
 	PageFooter footer;
 } FlashPage;
-static_assert(sizeof(FlashPage) == 2048, "?");
-static_assert(sizeof(Preset) + sizeof(SysParams) + sizeof(PageFooter) <= 2048, "?");
-static_assert(sizeof(PatternQuarter) + sizeof(SysParams) + sizeof(PageFooter) <= 2048, "?");
-static_assert(sizeof(SampleInfo) + sizeof(SysParams) + sizeof(PageFooter) <= 2048, "?");
-
-// == DEFINES == //
-
-#define FLASH_ADDR_256 (0x08000000 + 256 * FLASH_PAGE_SIZE)
-#define FLASH_PAGE_PTR(page) ((FlashPage*)(FLASH_ADDR_256 + (page) * FLASH_PAGE_SIZE))
-#define FOOTER_VERSION 2
-#define CALIB_PAGE 255
-#define MAGIC ((u64)0xf00dcafe473ff02a)
+static_assert(sizeof(FlashPage) == FLASH_PAGE_SIZE, "?");
+static_assert(sizeof(Preset) <= FLASH_PAGE_USABLE, "?");
+static_assert(sizeof(PatternQuarter) <= FLASH_PAGE_USABLE, "?");
+static_assert(sizeof(SampleInfo) <= FLASH_PAGE_USABLE, "?");
 
 // == FLASH VARS == //
 
@@ -59,13 +60,14 @@ static u8 next_free_flash_page = 0;
 static u32 next_footer_seq = 0;
 static bool flash_busy = false;
 
+// == RAM VARS == //
+
 static bool ram_initialized = false;
-SysParams sys_params;
 
 // item we are (or want to be) editing
 u8 cur_preset_id;
 static u8 cur_pattern_id = 0;
-u8 cur_sample_id = 0;
+static u8 cur_sample_id = 0;
 
 // item actually in ram
 static u8 ram_preset_id = 255;
@@ -73,6 +75,7 @@ static u8 ram_pattern_id = 255;
 static u8 ram_sample_id = 255;
 
 // ram item contents
+SysParams sys_params;
 Preset cur_preset;                 // floating preset, the one we edit and use for sound generation
 PatternQuarter cur_pattern_qtr[4]; // floating pattern, the one we edit and use for recording/playing
 SampleInfo cur_sample_info;
@@ -85,11 +88,11 @@ static u8 cued_sample_id = 255;
 // history of above, used to check double press on the same item
 static u8 prev_cued_sample_id = 255;
 
-static u8 edit_item_id = 255;   // ram item to edit | msb unset => save, msb set => clear
-static u8 recent_load_item = 0; // the most recently touched load item
+static u8 edit_item_id = 255; // ram item to edit | msb unset => save, msb set => clear
+static u8 clear_item;         // the item that will be cleared on an X long-press in UI_LOAD
 
-static u32 last_ram_write[NUM_MEM_SEGMENTS];
-static u32 last_flash_write[NUM_MEM_SEGMENTS];
+static u32 last_ram_write[NUM_MEM_SEGMENTS] = {};
+static u32 last_flash_write[NUM_MEM_SEGMENTS] = {};
 
 // == UTILS == //
 
@@ -100,24 +103,88 @@ static MemItemType get_item_type(u8 item_id) {
 	                                 : NUM_RAM_ITEMS;
 }
 
-static u16 compute_hash(const void* data, int nbytes) {
+static u16 compute_hash(const void* data, u16 nbytes) {
 	u16 hash = 123;
 	const u8* src = (const u8*)data;
-	for (int i = 0; i < nbytes; ++i)
+	for (u16 i = 0; i < nbytes; ++i)
 		hash = hash * 23 + *src++;
 	return hash;
+}
+
+u32 get_sample_address(void) {
+	return cur_sample_id * MAX_SAMPLE_LEN;
 }
 
 const Preset* preset_flash_ptr(u8 preset_id) {
 	if (preset_id >= NUM_PRESETS)
 		return init_params_ptr();
-	FlashPage* fp = FLASH_PAGE_PTR(lastest_flash_page_id[preset_id]);
+	FlashPage* fp = LATEST_FLASH_PTR(preset_id);
 	if (fp->footer.idx != preset_id || fp->footer.version != FOOTER_VERSION)
 		return init_params_ptr();
 	return (Preset*)fp;
 }
 
-// == FLASH == //
+// == FLASH WRITING == //
+
+static void flash_erase_page(u8 page) {
+	FLASH_WaitForLastOperation((u32)FLASH_TIMEOUT_VALUE);
+	SET_BIT(FLASH->CR, FLASH_CR_BKER); // bank 2
+	MODIFY_REG(FLASH->CR, FLASH_CR_PNB, ((page & 0xFFU) << FLASH_CR_PNB_Pos));
+	SET_BIT(FLASH->CR, FLASH_CR_PER);
+	SET_BIT(FLASH->CR, FLASH_CR_STRT);
+	FLASH_WaitForLastOperation((u32)FLASH_TIMEOUT_VALUE);
+	CLEAR_BIT(FLASH->CR, (FLASH_CR_PER | FLASH_CR_PNB));
+}
+
+static void flash_write_block(void* dst, const void* src, u16 size) {
+	u64* s = (u64*)src;
+	volatile u64* d = (volatile u64*)dst;
+	while (size >= 8) {
+		HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, (u32)(size_t)(d++), *s++);
+		size -= 8;
+	}
+}
+
+static void flash_write_page(u8 item_id, const void* src) {
+	flash_busy = true;
+	HAL_FLASH_Unlock();
+	bool in_use;
+	do {
+		FlashPage* fp = FLASH_PAGE_PTR(next_free_flash_page);
+		in_use = next_free_flash_page == 255;
+		in_use |= (fp->footer.idx < NUM_FLASH_ITEMS && lastest_flash_page_id[fp->footer.idx] == next_free_flash_page);
+		if (in_use)
+			++next_free_flash_page;
+	} while (in_use);
+	flash_erase_page(next_free_flash_page);
+	u16 size = (item_id < PATTERNS_START || item_id == FLOAT_PRESET_ID)     ? sizeof(Preset)
+	           : (item_id < F_SAMPLES_START || item_id >= FLOAT_PATTERN_ID) ? sizeof(PatternQuarter)
+	                                                                        : sizeof(SampleInfo);
+	FlashPage* fp = FLASH_PAGE_PTR(next_free_flash_page);
+	flash_write_block(fp, src, size);
+	flash_write_block(&fp->sys_params, &sys_params, sizeof(SysParams));
+	flash_write_block(&fp->footer, &(PageFooter){item_id, FOOTER_VERSION, compute_hash(fp, 2040), next_footer_seq++},
+	                  sizeof(PageFooter));
+	HAL_FLASH_Lock();
+	lastest_flash_page_id[item_id] = next_free_flash_page++;
+	flash_busy = false;
+}
+
+// == RAM STATE == //
+
+bool preset_outdated(void) {
+	return cur_preset_id != ram_preset_id;
+}
+
+bool pattern_outdated(void) {
+	return cur_pattern_id != ram_pattern_id;
+}
+
+static bool sample_outdated(void) {
+	return cur_sample_id != ram_sample_id;
+}
+
+// == INIT == //
 
 void check_bootloader_flash(void) {
 	u8 count = 0;
@@ -179,7 +246,7 @@ void check_bootloader_flash(void) {
 	 * The second word of the app is the entrypoint; it must point within the
 	 * flash area (or we have a bad flash).
 	 */
-	if (app_base[1] < 0x08000000 || app_base[1] >= 0x08010000) {
+	if (app_base[1] < FLASH_START || app_base[1] >= 0x08010000) {
 		HAL_Delay(10000);
 		return;
 	}
@@ -196,7 +263,7 @@ void check_bootloader_flash(void) {
 	EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
 	EraseInitStruct.Banks = FLASH_BANK_1;
 	EraseInitStruct.Page = 0;
-	EraseInitStruct.NbPages = 65536 / 2048;
+	EraseInitStruct.NbPages = 65536 / FLASH_PAGE_SIZE;
 	u32 SECTORError = 0;
 	if (HAL_FLASHEx_Erase(&EraseInitStruct, &SECTORError) != HAL_OK) {
 		DebugLog("BOOTLOADER flash erase error %d\r\n", SECTORError);
@@ -215,7 +282,7 @@ void check_bootloader_flash(void) {
 	__HAL_FLASH_INSTRUCTION_CACHE_ENABLE();
 	__HAL_FLASH_DATA_CACHE_ENABLE();
 	u64* s = (u64*)delay_ram_buf;
-	volatile u64* d = (volatile u64*)0x08000000;
+	volatile u64* d = (volatile u64*)FLASH_START;
 	u32 size_bytes = 65536;
 	for (; size_bytes > 0; size_bytes -= 8) {
 		HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, (u32)(size_t)(d++), *s++);
@@ -229,204 +296,8 @@ void check_bootloader_flash(void) {
 	HAL_Delay(3000);
 }
 
-// writing flash
-
-static void flash_erase_page(u8 page) {
-	FLASH_WaitForLastOperation((u32)FLASH_TIMEOUT_VALUE);
-	SET_BIT(FLASH->CR, FLASH_CR_BKER); // bank 2
-	MODIFY_REG(FLASH->CR, FLASH_CR_PNB, ((page & 0xFFU) << FLASH_CR_PNB_Pos));
-	SET_BIT(FLASH->CR, FLASH_CR_PER);
-	SET_BIT(FLASH->CR, FLASH_CR_STRT);
-	FLASH_WaitForLastOperation((u32)FLASH_TIMEOUT_VALUE);
-	CLEAR_BIT(FLASH->CR, (FLASH_CR_PER | FLASH_CR_PNB));
-}
-
-static void flash_write_block(void* dst, const void* src, int size) {
-	u64* s = (u64*)src;
-	volatile u64* d = (volatile u64*)dst;
-	while (size >= 8) {
-		HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, (u32)(size_t)(d++), *s++);
-		size -= 8;
-	}
-}
-
-static void flash_write_page(const void* src, u32 size, u8 item_id) {
-	flash_busy = true;
-	HAL_FLASH_Unlock();
-	bool in_use;
-	do {
-		FlashPage* p = FLASH_PAGE_PTR(next_free_flash_page);
-		in_use = next_free_flash_page == 255;
-		in_use |= (p->footer.idx < NUM_FLASH_ITEMS && lastest_flash_page_id[p->footer.idx] == next_free_flash_page);
-		if (in_use)
-			++next_free_flash_page;
-	} while (in_use);
-	flash_erase_page(next_free_flash_page);
-	u8 flash_page = next_free_flash_page++;
-	u8* dst = (u8*)(FLASH_ADDR_256 + flash_page * FLASH_PAGE_SIZE);
-	flash_write_block(dst, src, size);
-	flash_write_block(dst + FLASH_PAGE_SIZE - sizeof(SysParams) - sizeof(PageFooter), &sys_params, sizeof(SysParams));
-	PageFooter footer;
-	footer.idx = item_id;
-	footer.seq = next_footer_seq++;
-	footer.version = FOOTER_VERSION;
-	footer.crc = compute_hash(dst, 2040);
-	flash_write_block(dst + 2040, &footer, 8);
-	HAL_FLASH_Lock();
-	lastest_flash_page_id[item_id] = flash_page;
-	flash_busy = false;
-}
-
-// flash read/write helpers
-
-void flash_read_preset(u8 preset_id) {
-	const Preset* src = init_params_ptr();
-	if (preset_id < NUM_PRESETS) {
-		FlashPage* fp = FLASH_PAGE_PTR(lastest_flash_page_id[preset_id]);
-		if (fp->footer.idx == preset_id && fp->footer.version == FOOTER_VERSION)
-			src = (Preset*)fp;
-	}
-	memcpy(&cur_preset, src, sizeof(Preset));
-}
-
-static bool flash_read_floating_preset(void) {
-	FlashPage* fp = FLASH_PAGE_PTR(lastest_flash_page_id[FLOAT_PRESET_ID]);
-	if (fp->footer.idx != FLOAT_PRESET_ID || fp->footer.version != FOOTER_VERSION)
-		return false;
-	memcpy(&cur_preset, (Preset*)fp, sizeof(Preset));
-	return true;
-}
-
-void flash_write_preset(u8 preset_id) {
-	if (preset_id < NUM_PRESETS)
-		flash_write_page(&cur_preset, sizeof(Preset), preset_id);
-}
-
-static void flash_write_floating_preset(void) {
-	flash_write_page(&cur_preset, sizeof(Preset), FLOAT_PRESET_ID);
-}
-
-static void flash_read_pattern(u8 pattern_id) {
-	if (pattern_id >= NUM_PATTERNS)
-		return;
-	u8 base_id = 4 * pattern_id;
-	for (u8 qtr = 0; qtr < 4; ++qtr) {
-		const PatternQuarter* src = (PatternQuarter*)zero;
-		FlashPage* fp = FLASH_PAGE_PTR(lastest_flash_page_id[PATTERNS_START + base_id + qtr]);
-		if (fp->footer.idx == PATTERNS_START + base_id + qtr && fp->footer.version == FOOTER_VERSION)
-			src = (PatternQuarter*)fp;
-		memcpy(&cur_pattern_qtr[qtr], src, sizeof(PatternQuarter));
-	}
-}
-
-static bool flash_read_floating_pattern(void) {
-	FlashPage* fp = FLASH_PAGE_PTR(lastest_flash_page_id[FLOAT_PATTERN_ID]);
-	if (fp->footer.idx != FLOAT_PATTERN_ID || fp->footer.version != FOOTER_VERSION)
-		return false;
-	for (u8 qtr = 0; qtr < 4; ++qtr) {
-		fp = FLASH_PAGE_PTR(lastest_flash_page_id[FLOAT_PATTERN_ID + qtr]);
-		memcpy(&cur_pattern_qtr[qtr], (PatternQuarter*)fp, sizeof(PatternQuarter));
-	}
-	return true;
-}
-
-static void flash_write_pattern(u8 pattern_id) {
-	if (pattern_id < NUM_PATTERNS) {
-		u8 base_id = PATTERNS_START + 4 * pattern_id;
-		for (u8 qtr = 0; qtr < 4; ++qtr)
-			flash_write_page(&cur_pattern_qtr[qtr], sizeof(PatternQuarter), base_id + qtr);
-	}
-}
-
-static void flash_write_floating_quarter(u8 quarter) {
-	flash_write_page(&cur_pattern_qtr[quarter], sizeof(PatternQuarter), FLOAT_PATTERN_ID + quarter);
-}
-
-static void flash_read_sample_info(u8 sample_id) {
-	const SampleInfo* src = (SampleInfo*)zero;
-	if (sample_id < NUM_SAMPLES) {
-		FlashPage* fp = FLASH_PAGE_PTR(lastest_flash_page_id[F_SAMPLES_START + sample_id]);
-		if (fp->footer.idx == F_SAMPLES_START + sample_id && fp->footer.version == FOOTER_VERSION)
-			src = (SampleInfo*)fp;
-	}
-	memcpy(&cur_sample_info, src, sizeof(SampleInfo));
-}
-
-static void flash_write_sample_info(u8 sample_id) {
-	if (sample_id < NUM_SAMPLES)
-		flash_write_page(&cur_sample_info, sizeof(SampleInfo), F_SAMPLES_START + sample_id);
-}
-
-FlashCalibType flash_read_calib(void) {
-	FlashCalibType flash_calib_type = FLASH_CALIB_NONE;
-	volatile u64* flash = (volatile u64*)(FLASH_ADDR_256 + CALIB_PAGE * 2048);
-	if (!(flash[0] == MAGIC && flash[255] == ~MAGIC))
-		return FLASH_CALIB_NONE;
-	// read touch calibration data
-	volatile u64* src = flash + 1;
-	if (*src != ~(u64)(0)) {
-		flash_calib_type |= FLASH_CALIB_TOUCH;
-		memcpy(touch_calib_ptr(), (u64*)src, sizeof(TouchCalibData) * NUM_TOUCH_READINGS);
-	}
-	// read adc/dac calibration data
-	src += sizeof(TouchCalibData) * NUM_TOUCH_READINGS / 8;
-	if (*src != ~(u64)(0)) {
-		flash_calib_type |= FLASH_CALIB_ADC_DAC;
-		memcpy(adc_dac_calib_ptr(), (u64*)src, sizeof(ADC_DAC_Calib) * NUM_ADC_DAC_ITEMS);
-	}
-	return flash_calib_type;
-}
-
-void flash_write_calib(FlashCalibType flash_calib_type) {
-	HAL_FLASH_Unlock();
-	flash_erase_page(CALIB_PAGE);
-	u64* flash = (u64*)(FLASH_ADDR_256 + CALIB_PAGE * 2048);
-	HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, (u32)flash, MAGIC);
-	// write touch calibration data
-	u64* dst = flash + 1;
-	if (flash_calib_type & FLASH_CALIB_TOUCH)
-		flash_write_block(dst, touch_calib_ptr(), sizeof(TouchCalibData) * NUM_TOUCH_READINGS);
-	// write adc/dac calibration data
-	dst += (sizeof(TouchCalibData) * NUM_TOUCH_READINGS + 7) / 8;
-	if (flash_calib_type & FLASH_CALIB_ADC_DAC)
-		flash_write_block(dst, adc_dac_calib_ptr(), sizeof(ADC_DAC_Calib) * NUM_ADC_DAC_ITEMS);
-	HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, (u32)(flash + 255), ~MAGIC);
-	HAL_FLASH_Lock();
-}
-
-// == RAM == //
-
-// when the current item is not equal to the item in ram, this indicates we're still writing the old ram item to flash
-static bool preset_outdated(void) {
-	return cur_preset_id != ram_preset_id;
-}
-bool pattern_outdated(void) {
-	return cur_pattern_id != ram_pattern_id;
-}
-static bool sample_outdated(void) {
-	return cur_sample_id != ram_sample_id;
-}
-
-// == MAIN == //
-
-// only_filled returns 0 if the step doesn't hold any pressure data
-PatternStringStep* string_step_ptr(u8 string_id, bool only_filled, u8 seq_step) {
-	if (preset_outdated() && only_filled)
-		return 0;
-	PatternStringStep* step = &cur_pattern_qtr[(seq_step >> 4) & 3].steps[seq_step & 15][string_id];
-	if (!only_filled)
-		return step;
-	// return pointer if any of its substeps hold pressure
-	for (u8 substep_id = 0; substep_id < 8; substep_id++)
-		if (step->pres[substep_id])
-			return step;
-	// otherwise return 0
-	return 0;
-}
-
 void init_memory(void) {
 	// init flash
-
 	u8 dummy_page = 0;
 	memset(lastest_flash_page_id, dummy_page, sizeof(lastest_flash_page_id));
 	u32 highest_seq = 0;
@@ -434,14 +305,14 @@ void init_memory(void) {
 	memset(&sys_params, 0, sizeof(sys_params));
 	// scan for the latest page for each object
 	for (u8 page = 0; page < 255; ++page) {
-		FlashPage* p = FLASH_PAGE_PTR(page);
-		u8 i = p->footer.idx;
+		FlashPage* fp = FLASH_PAGE_PTR(page);
+		u8 i = fp->footer.idx;
 		if (i >= NUM_FLASH_ITEMS)
 			continue; // skip blank
-		if (p->footer.version < FOOTER_VERSION)
+		if (fp->footer.version < FOOTER_VERSION)
 			continue; // skip old
-		u16 check = compute_hash(p, 2040);
-		if (check != p->footer.crc) {
+		u16 check = compute_hash(fp, 2040);
+		if (check != fp->footer.crc) {
 			DebugLog("flash page %d has a bad crc!\r\n", page);
 			if (page == dummy_page) {
 				// shit, the dummy page is dead! move to a different dummy
@@ -452,31 +323,17 @@ void init_memory(void) {
 			}
 			continue;
 		}
-		if (p->footer.seq > highest_seq) {
-			highest_seq = p->footer.seq;
+		if (fp->footer.seq > highest_seq) {
+			highest_seq = fp->footer.seq;
 			next_free_flash_page = page + 1;
-			sys_params = p->sys_params;
+			sys_params = fp->sys_params;
 		}
-		FlashPage* existing = FLASH_PAGE_PTR(lastest_flash_page_id[i]);
-		if (existing->footer.idx != i || p->footer.seq > existing->footer.seq || existing->footer.version < 2)
+		FlashPage* existing = LATEST_FLASH_PTR(i);
+		if (existing->footer.idx != i || fp->footer.seq > existing->footer.seq || existing->footer.version < 2)
 			lastest_flash_page_id[i] = page;
 	}
 	next_footer_seq = highest_seq + 1;
 
-	// init ram
-
-	cued_preset_id = -1;
-	cued_pattern_id = -1;
-	cued_sample_id = -1;
-	ram_pattern_id = -1;
-	ram_sample_id = -1;
-	ram_preset_id = -1;
-	// relocate the first preset and pattern into ram
-	edit_item_id = 255;
-	for (u8 i = 0; i < NUM_MEM_SEGMENTS; ++i) {
-		last_ram_write[i] = 0;
-		last_flash_write[i] = 0;
-	}
 	// update sys params
 	Font font = F_16;
 	switch (sys_params.version) {
@@ -512,29 +369,94 @@ void init_memory(void) {
 		HAL_Delay(2000);
 	}
 	codec_update_volume();
-	cur_preset_id = sys_params.preset_id;
-	// load floating preset
-	if (flash_read_floating_preset()) {
-		ram_preset_id = sys_params.preset_id;
-		// load floating pattern
-		flash_read_floating_pattern();
-		cur_pattern_id = param_index_unmod(P_PATTERN);
-		ram_pattern_id = cur_pattern_id;
+
+	// update presets
+	u8 presets_updated = 0;
+	Preset preset;
+	for (u8 preset_id = 0; preset_id < NUM_PRESETS; preset_id++) {
+		// load preset
+		FlashPage* fp = LATEST_FLASH_PTR(preset_id);
+		if (fp->footer.idx == preset_id && fp->footer.version == FOOTER_VERSION) {
+			memcpy(&preset, (Preset*)fp, sizeof(Preset));
+			// update preset
+			if (update_preset(&preset)) {
+				// save updated preset
+				flash_write_page(preset_id, &preset);
+				presets_updated++;
+			}
+		}
+
+		if (presets_updated) {
+			oled_clear();
+			draw_str_ctr(0, font, "updating");
+			draw_str_ctr(16, font, "presets");
+			if (preset_id < NUM_PRESETS / 2)
+				inverted_rectangle(0, 0, 8 * (preset_id + 1), OLED_HEIGHT);
+			else
+				inverted_rectangle(8 * (preset_id + 1 - NUM_PRESETS / 2), 0, OLED_WIDTH, OLED_HEIGHT);
+			oled_flip();
+		}
 	}
 
-	recent_load_item = cur_preset_id;
+	// display result of updated presets
+	if (presets_updated) {
+		HAL_Delay(200);
+		oled_clear();
+		draw_str_ctr(0, font, "updated");
+		char str[16];
+		sprintf(str, "%d preset%s", presets_updated, presets_updated > 1 ? "s" : "");
+		draw_str_ctr(16, font, str);
+		oled_flip();
+		HAL_Delay(2000);
+	}
+
+	// restore boot logo
+	draw_logo();
+
+	cur_preset_id = sys_params.preset_id;
+	// load floating preset
+	FlashPage* fp = LATEST_FLASH_PTR(FLOAT_PRESET_ID);
+	if (fp->footer.idx == FLOAT_PRESET_ID && fp->footer.version == FOOTER_VERSION) {
+		memcpy(&cur_preset, (Preset*)fp, sizeof(Preset));
+		ram_preset_id = cur_preset_id;
+		// load floating pattern
+		cur_pattern_id = param_index_unmod(P_PATTERN);
+		for (u8 qtr = 0; qtr < 4; ++qtr)
+			memcpy(&cur_pattern_qtr[qtr], LATEST_FLASH_PTR(FLOAT_PATTERN_ID + qtr), sizeof(PatternQuarter));
+		ram_pattern_id = cur_pattern_id;
+	}
+	// no existing floating preset
+	else {
+		// load & save preset slot into floating preset
+		memcpy(&cur_preset, preset_flash_ptr(cur_preset_id), sizeof(Preset));
+		flash_write_page(FLOAT_PRESET_ID, &cur_preset);
+		sys_params.preset_aligned = true;
+		// load & save pattern slot into floating pattern
+		cur_pattern_id = param_index_unmod(P_PATTERN);
+		u8 base_id = 4 * cur_pattern_id + PATTERNS_START;
+		for (u8 qtr = 0; qtr < 4; ++qtr) {
+			memcpy(&cur_pattern_qtr[qtr], LATEST_FLASH_PTR(base_id + qtr), sizeof(PatternQuarter));
+			flash_write_page(FLOAT_PATTERN_ID + qtr, &cur_pattern_qtr[qtr]);
+		}
+		sys_params.pattern_aligned = true;
+		log_ram_edit(SEG_SYS_PARAMS);
+	}
+
+	clear_item = cur_preset_id;
 	ram_initialized = true;
 }
 
-static bool need_flash_write(MemSegment segment, u32 now) {
+// == MAIN == //
+
+static bool need_flash_write(MemSegment seg, u32 now) {
 	// segment up to date => no write
-	if (last_ram_write[segment] == last_flash_write[segment])
+	if (last_ram_write[seg] == last_flash_write[seg])
 		return false;
 
 	// a ram item (preset, pattern, sample) being outdated means the user has requested to load a different one, but
 	// that load has not happened yet because the current item hasn't finished writing to flash - we need to write it to
 	// flash immediately so the new item can be loaded
-	switch (segment) {
+	switch (seg) {
 	case SEG_PRESET:
 		if (preset_outdated())
 			return true;
@@ -556,105 +478,142 @@ static bool need_flash_write(MemSegment segment, u32 now) {
 
 	// if our ram item was not outdated, that means we changed something small (a parameter, the contents of a step,
 	// etc) we try to wait for at least 5 seconds after the most recent edit before we write them to flash
-	if (now - last_ram_write[segment] > 5000)
+	if (now - last_ram_write[seg] > 5000)
 		return true;
 	// but if we are out of date for a minute or more, we write immediately
-	return last_ram_write[segment] - last_flash_write[segment] > 60000;
+	return last_ram_write[seg] - last_flash_write[seg] > 60000;
 }
 
 void memory_frame(void) {
-
-	u32 now = millis();
-
-	// handle requested edits
-	if (edit_item_id != 255) {
-		MemItemType item_type = get_item_type(edit_item_id & 63);
-		// msb set => clear
-		if (edit_item_id & 128) {
-			edit_item_id &= 63;
-			switch (item_type) {
-			case MEM_PRESET:
-				// clear floating preset
-				memcpy(&cur_preset, init_params_ptr(), sizeof(Preset));
-				log_ram_edit(SEG_PRESET);
-				// write floating preset to preset slot
-				flash_write_preset(edit_item_id);
-				// update state
-				cur_preset_id = edit_item_id;
-				ram_preset_id = edit_item_id;
-				if (!sys_params.preset_aligned) {
-					sys_params.preset_aligned = true;
-					log_ram_edit(SEG_SYS_PARAMS);
-				}
-				break;
-			case MEM_PATTERN:
-				// clear floating pattern
-				memset(&cur_pattern_qtr, 0, 4 * sizeof(PatternQuarter));
-				log_ram_edit(SEG_PAT0);
-				log_ram_edit(SEG_PAT1);
-				log_ram_edit(SEG_PAT2);
-				log_ram_edit(SEG_PAT3);
-				// write floating pattern to pattern slot
-				flash_write_pattern(edit_item_id - PATTERNS_START);
-				// update state
-				cur_pattern_id = edit_item_id;
-				ram_pattern_id = edit_item_id;
-				if (!sys_params.pattern_aligned) {
-					sys_params.pattern_aligned = true;
-					log_ram_edit(SEG_SYS_PARAMS);
-				}
-				break;
-			case MEM_SAMPLE:
-				memset(&cur_sample_info, 0, sizeof(SampleInfo));
-				log_ram_edit(SEG_SAMPLE_INFO);
-				break;
-			default:
-				break;
-			}
+	MemItemType item_type = get_item_type(edit_item_id & 63);
+	// clear requested
+	if (edit_item_id != 255 && (edit_item_id & 128)) {
+		// clearing the first bit also requests a save for this item
+		edit_item_id &= 63;
+		switch (item_type) {
+		case MEM_PRESET:
+			// clear floating preset
+			memcpy(&cur_preset, init_params_ptr(), sizeof(Preset));
+			log_ram_edit(SEG_PRESET);
+			break;
+		case MEM_PATTERN:
+			// clear floating pattern
+			memset(&cur_pattern_qtr, 0, 4 * sizeof(PatternQuarter));
+			log_ram_edit(SEG_PAT0);
+			log_ram_edit(SEG_PAT1);
+			log_ram_edit(SEG_PAT2);
+			log_ram_edit(SEG_PAT3);
+			break;
+		case MEM_SAMPLE:
+			// clear current sample info
+			memset(&cur_sample_info, 0, sizeof(SampleInfo));
+			log_ram_edit(SEG_SAMPLE_INFO);
+			break;
+		default:
+			break;
 		}
-		// msb not set => save
-		else {
-			switch (item_type) {
-			case MEM_PRESET:
-				// write floating preset to selected preset slot
-				flash_write_preset(edit_item_id);
-				// make selected preset active - the fast loop will retrieve this when necessary
-				cur_preset_id = edit_item_id;
-				break;
-			case MEM_PATTERN: {
-				// write floating pattern to selected pattern slot
-				u8 ptn_id = edit_item_id - PATTERNS_START;
-				flash_write_pattern(ptn_id);
-				// make selected pattern active in preset - the fast loop will retrieve this when necessary
-				save_param_index(P_PATTERN, ptn_id);
-			} break;
-			default:
-				// samples don't copy
-				break;
-			}
-		}
-		edit_item_id = 255; // clear edit item
 	}
+	// save requested
+	if (edit_item_id != 255 && !(edit_item_id & 128)) {
+		switch (item_type) {
+		case MEM_PRESET:
+			// update sys_params before writing to flash
+			sys_params.preset_aligned = true;
+			log_ram_edit(SEG_SYS_PARAMS);
+			// write floating preset to selected preset slot
+			flash_write_page(edit_item_id, &cur_preset);
+			// make selected preset active - the fast loop will retrieve this when necessary
+			cur_preset_id = edit_item_id;
+			break;
+		case MEM_PATTERN: {
+			// update sys_params before writing to flash
+			sys_params.pattern_aligned = true;
+			log_ram_edit(SEG_SYS_PARAMS);
+			// write floating pattern to selected pattern slot
+			u8 pattern_id = edit_item_id - PATTERNS_START;
+			u8 base_id = PATTERNS_START + 4 * pattern_id;
+			for (u8 qtr = 0; qtr < 4; ++qtr)
+				flash_write_page(base_id + qtr, &cur_pattern_qtr[qtr]);
+			// make selected pattern active in preset - the fast loop will retrieve this when necessary
+			save_param_index(P_PATTERN, pattern_id);
+		} break;
+		default:
+			// sample saving is handled elsewhere
+			break;
+		}
+	}
+	// clear edit item
+	edit_item_id = 255;
 
 	// write ram items to flash (auto-save)
 
+	u32 now = millis();
 	for (u8 qtr = 0; qtr < 4; ++qtr) {
 		if (need_flash_write(SEG_PAT0 + qtr, now)) {
 			last_flash_write[SEG_SYS_PARAMS] = last_ram_write[SEG_SYS_PARAMS];
 			last_flash_write[SEG_PAT0 + qtr] = last_ram_write[SEG_PAT0 + qtr];
-			flash_write_floating_quarter(qtr);
+			// write floating quarter
+			flash_write_page(FLOAT_PATTERN_ID + qtr, &cur_pattern_qtr[qtr]);
 		}
 	}
 	if (need_flash_write(SEG_SAMPLE_INFO, now)) {
 		last_flash_write[SEG_SYS_PARAMS] = last_ram_write[SEG_SYS_PARAMS];
 		last_flash_write[SEG_SAMPLE_INFO] = last_ram_write[SEG_SAMPLE_INFO];
-		flash_write_sample_info(ram_sample_id);
+		// write current sample info
+		flash_write_page(F_SAMPLES_START + ram_sample_id, &cur_sample_info);
 	}
 	if (need_flash_write(SEG_PRESET, now) || need_flash_write(SEG_SYS_PARAMS, now)) {
 		last_flash_write[SEG_SYS_PARAMS] = last_ram_write[SEG_SYS_PARAMS];
 		last_flash_write[SEG_PRESET] = last_ram_write[SEG_PRESET];
-		flash_write_floating_preset();
+		// write floating preset
+		flash_write_page(FLOAT_PRESET_ID, &cur_preset);
 	}
+}
+
+void revert_presets(void) {
+	Font font = F_16;
+
+	// revert system settings - only volume is relevant
+	sys_params.volume_lsb = mini(((sys_params.volume_msb << 8) + sys_params.volume_lsb) >> 4, 63) - 45;
+	sys_params.version = REV_SYS_PARAMS_VERSION;
+	oled_clear();
+	draw_str_ctr(0, font, "reverted");
+	draw_str_ctr(16, font, "system settings");
+	inverted_rectangle(0, 0, OLED_WIDTH, OLED_HEIGHT);
+	oled_flip();
+	HAL_Delay(2000);
+
+	Preset preset;
+	for (u8 preset_id = 0; preset_id < NUM_PRESETS; preset_id++) {
+		// visuals
+		oled_clear();
+		draw_str_ctr(0, font, "reverting");
+		draw_str_ctr(16, font, "presets");
+		inverted_rectangle(4 * preset_id, 0, OLED_WIDTH, OLED_HEIGHT);
+		oled_flip();
+
+		// load preset
+		FlashPage* fp = LATEST_FLASH_PTR(preset_id);
+		if (fp->footer.idx == preset_id && fp->footer.version == FOOTER_VERSION) {
+			memcpy(&preset, (Preset*)fp, sizeof(Preset));
+			// revert preset
+			revert_preset(&preset);
+			// save reverted preset
+			flash_write_page(preset_id, &preset);
+		}
+	}
+
+	// finish up
+	oled_clear();
+	draw_str_ctr(0, font, "presets");
+	draw_str_ctr(16, font, "reverted");
+	oled_flip();
+	HAL_Delay(2000);
+	oled_clear();
+	draw_str_ctr(0, font, "please turn");
+	draw_str_ctr(16, font, "off plinky!");
+	oled_flip();
+	while (true) {}
 }
 
 // == UPDATE RAM == //
@@ -686,99 +645,118 @@ void log_ram_edit(MemSegment segment) {
 	last_ram_write[segment] = millis();
 }
 
-void update_preset_ram(bool force) {
+void update_preset_ram(void) {
 	if (!ram_initialized)
 		return;
 	// already up to date
-	if (!preset_outdated() && !force)
+	if (!preset_outdated())
 		return;
 	// flash is not ready
 	if (flash_busy || segment_outdated(SEG_PRESET))
 		return;
-	// retrieve preset from flash
 	clear_latch();
-	flash_read_preset(cur_preset_id);
+	// load cur_preset
+	const Preset* src = init_params_ptr();
+	FlashPage* fp = LATEST_FLASH_PTR(cur_preset_id);
+	if (fp->footer.idx == cur_preset_id && fp->footer.version == FOOTER_VERSION)
+		src = (Preset*)fp;
+	memcpy(&cur_preset, src, sizeof(Preset));
+	log_ram_edit(SEG_PRESET);
+	// update state
 	ram_preset_id = cur_preset_id;
-	sys_params.preset_id = cur_preset_id;
-	sys_params.preset_aligned = true;
-	log_ram_edit(SEG_SYS_PARAMS);
+	if (sys_params.preset_id != cur_preset_id || !sys_params.preset_aligned) {
+		sys_params.preset_id = cur_preset_id;
+		sys_params.preset_aligned = true;
+		log_ram_edit(SEG_SYS_PARAMS);
+	}
 }
 
-void update_pattern_ram(bool force) {
+void update_pattern_ram(void) {
 	if (!ram_initialized)
 		return;
 	cur_pattern_id = param_index(P_PATTERN);
 	// already up to date
-	if (!pattern_outdated() && !force)
+	if (!pattern_outdated())
 		return;
 	// flash is not ready
 	if (flash_busy || segment_outdated(SEG_PAT0) || segment_outdated(SEG_PAT1) || segment_outdated(SEG_PAT2)
 	    || segment_outdated(SEG_PAT3))
 		return;
-	// retrieve pattern from flash
-	flash_read_pattern(cur_pattern_id);
+	// load cur_pattern_qtr
+	u8 base_id = 4 * cur_pattern_id + PATTERNS_START;
+	for (u8 qtr = 0; qtr < 4; ++qtr) {
+		u8 qtr_id = base_id + qtr;
+		const PatternQuarter* src = (PatternQuarter*)zero;
+		FlashPage* fp = LATEST_FLASH_PTR(qtr_id);
+		if (fp->footer.idx == qtr_id && fp->footer.version == FOOTER_VERSION)
+			src = (PatternQuarter*)fp;
+		memcpy(&cur_pattern_qtr[qtr], src, sizeof(PatternQuarter));
+		log_ram_edit(SEG_PAT0 + qtr);
+	}
+	// update state
 	ram_pattern_id = cur_pattern_id;
-	sys_params.pattern_aligned = true;
-	log_ram_edit(SEG_SYS_PARAMS);
+	if (!sys_params.pattern_aligned) {
+		sys_params.pattern_aligned = true;
+		log_ram_edit(SEG_SYS_PARAMS);
+	}
 }
 
-void update_sample_ram(bool force) {
+void update_sample_ram(void) {
 	cur_sample_id = param_index(P_SAMPLE);
 	// already up to date
-	if (!sample_outdated() && !force)
+	if (!sample_outdated())
 		return;
 	// flash is not ready
 	if (flash_busy || segment_outdated(SEG_SAMPLE_INFO))
 		return;
-	// retrieve sample info from flash
-	flash_read_sample_info(cur_sample_id);
+	// load cur_sample_info
+	const SampleInfo* src = (SampleInfo*)zero;
+	if (cur_sample_id < NUM_SAMPLES) {
+		FlashPage* fp = LATEST_FLASH_PTR(F_SAMPLES_START + cur_sample_id);
+		if (fp->footer.idx == F_SAMPLES_START + cur_sample_id && fp->footer.version == FOOTER_VERSION)
+			src = (SampleInfo*)fp;
+	}
+	memcpy(&cur_sample_info, src, sizeof(SampleInfo));
 	ram_sample_id = cur_sample_id;
 }
 
 // == SAVE / LOAD == //
 
-void load_preset(u8 preset_id, bool force) {
-	if (preset_id == cur_preset_id && !force)
+void load_preset(u8 preset_id) {
+	if (preset_id == cur_preset_id)
 		return;
 	cur_preset_id = preset_id;
-	update_preset_ram(force);
+	update_preset_ram();
+	clear_item = preset_id;
 }
 
 // rj: this function is exclusively used by open_sampler, we might want to look at using the regular loading
 // implementation instead of this for open_sampler as well
 void load_sample(u8 sample_id) {
-	flash_read_sample_info(sample_id);
 	cur_sample_id = sample_id;
-	ram_sample_id = sample_id;
+	update_sample_ram();
 	cued_sample_id = 255;
 }
 
-// register the most recently touched ram item
-void touch_load_item(u8 item_id) {
-	recent_load_item = item_id;
+// line up clear_item to be cleared during the next tick
+void clear_mem_item(void) {
+	edit_item_id = clear_item | 128;
 }
 
-// line up recent_load_item to be cleared during the next tick
-void clear_ram_item(void) {
-	edit_item_id = recent_load_item | 128;
-}
-
-void save_load_ram_item(u8 item_id) {
+void save_load_mem_item(u8 item_id) {
 	// holding shift pad: save item
 	if (shift_state == SS_LOAD)
 		edit_item_id = item_id;
 	// not holding shift pad: cue item for loading
-	else {
-		touch_load_item(item_id);
-		cue_ram_item(item_id);
-	}
+	else
+		cue_mem_item(item_id);
 }
 
 // returns true if there's a chance this made changes to the sequencer
-bool apply_cued_load_items(void) {
+bool apply_cued_mem_items(void) {
 	bool possible_seq_changes = false;
 	if (cued_preset_id != 255) {
-		load_preset(cued_preset_id, true);
+		load_preset(cued_preset_id);
 		cued_preset_id = 255;
 		possible_seq_changes = true;
 	}
@@ -794,7 +772,7 @@ bool apply_cued_load_items(void) {
 	return possible_seq_changes;
 }
 
-void cue_ram_item(u8 item_id) {
+void cue_mem_item(u8 item_id) {
 	// triggered on touch start:
 	// - save what was cued into prev_cued, if they end up the same this is a double press
 	// - save touched pad as cued item
@@ -807,8 +785,7 @@ void cue_ram_item(u8 item_id) {
 		}
 		// load immediately
 		if (!seq_playing() || item_id == cued_preset_id) {
-			cur_preset_id = item_id;
-			update_preset_ram(true);
+			load_preset(item_id);
 			return;
 		}
 		// cue
@@ -824,7 +801,7 @@ void cue_ram_item(u8 item_id) {
 		// load immediately
 		if (!seq_playing() || pattern_id == cued_pattern_id) {
 			save_param_index(P_PATTERN, pattern_id);
-			update_pattern_ram(true);
+			update_pattern_ram();
 			return;
 		}
 		// cue
@@ -841,6 +818,7 @@ void cue_ram_item(u8 item_id) {
 	default:
 		break;
 	}
+	clear_item = item_id;
 }
 
 void try_apply_cued_ram_item(u8 item_id) {
@@ -859,6 +837,47 @@ void try_apply_cued_ram_item(u8 item_id) {
 		break;
 	}
 }
+
+// == CALIB == //
+
+FlashCalibType flash_read_calib(void) {
+	FlashCalibType flash_calib_type = FLASH_CALIB_NONE;
+	volatile u64* flash = (volatile u64*)FLASH_PAGE_PTR(CALIB_PAGE);
+	if (!(flash[0] == MAGIC && flash[255] == ~MAGIC))
+		return FLASH_CALIB_NONE;
+	// read touch calibration data
+	volatile u64* src = flash + 1;
+	if (*src != ~(u64)(0)) {
+		flash_calib_type |= FLASH_CALIB_TOUCH;
+		memcpy(touch_calib_ptr(), (u64*)src, sizeof(TouchCalibData) * NUM_TOUCH_READINGS);
+	}
+	// read adc/dac calibration data
+	src += sizeof(TouchCalibData) * NUM_TOUCH_READINGS / 8;
+	if (*src != ~(u64)(0)) {
+		flash_calib_type |= FLASH_CALIB_ADC_DAC;
+		memcpy(adc_dac_calib_ptr(), (u64*)src, sizeof(ADC_DAC_Calib) * NUM_ADC_DAC_ITEMS);
+	}
+	return flash_calib_type;
+}
+
+void flash_write_calib(FlashCalibType flash_calib_type) {
+	HAL_FLASH_Unlock();
+	flash_erase_page(CALIB_PAGE);
+	u64* flash = (u64*)FLASH_PAGE_PTR(CALIB_PAGE);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, (u32)flash, MAGIC);
+	// write touch calibration data
+	u64* dst = flash + 1;
+	if (flash_calib_type & FLASH_CALIB_TOUCH)
+		flash_write_block(dst, touch_calib_ptr(), sizeof(TouchCalibData) * NUM_TOUCH_READINGS);
+	// write adc/dac calibration data
+	dst += (sizeof(TouchCalibData) * NUM_TOUCH_READINGS + 7) / 8;
+	if (flash_calib_type & FLASH_CALIB_ADC_DAC)
+		flash_write_block(dst, adc_dac_calib_ptr(), sizeof(ADC_DAC_Calib) * NUM_ADC_DAC_ITEMS);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, (u32)(flash + 255), ~MAGIC);
+	HAL_FLASH_Lock();
+}
+
+// == VISUALS == //
 
 u8 draw_cued_preset_id(void) {
 	if (cued_preset_id != 255)
@@ -900,7 +919,7 @@ void draw_sample_id(void) {
 	fdraw_str(-128, 16, F_20_BOLD, cur_sample_id < NUM_SAMPLES ? I_WAVE "%d" : I_WAVE "Off", cur_sample_id + 1);
 }
 
-void draw_select_load_item(u8 item_id, bool done) {
+void draw_save_load_item(u8 item_id, bool done) {
 	switch (get_item_type(item_id)) {
 	case MEM_PRESET:
 		if (shift_state == SS_LOAD)
@@ -926,26 +945,26 @@ void draw_select_load_item(u8 item_id, bool done) {
 	}
 }
 
-void draw_clear_load_item(bool done) {
-	switch (get_item_type(recent_load_item)) {
+void draw_clear_item(bool done) {
+	switch (get_item_type(clear_item)) {
 	case MEM_PRESET:
 		fdraw_str(0, 0, F_16_BOLD, done ? "cleared\n" I_PRESET "Preset %d" : "initialize\n" I_PRESET "Preset %d?",
-		          recent_load_item + 1);
+		          clear_item + 1);
 		break;
 	case MEM_PATTERN:
 		fdraw_str(0, 0, F_16_BOLD, done ? "cleared\n" I_SEQ "Pattern %d." : "Clear\n" I_SEQ "Pattern %d?",
-		          recent_load_item - PATTERNS_START + 1);
+		          clear_item - PATTERNS_START + 1);
 		break;
 	case MEM_SAMPLE:
 		fdraw_str(0, 0, F_16_BOLD, done ? "cleared\n" I_WAVE "Sample %d." : "Clear\n" I_WAVE "Sample %d?",
-		          recent_load_item - SAMPLES_START + 1);
+		          clear_item - SAMPLES_START + 1);
 		break;
 	default:
 		break;
 	}
 }
 
-void draw_ram_save_load(void) {
+void draw_ui_load_label(void) {
 	const u8 x0 = 101;
 	const u8 x1 = OLED_WIDTH - 1;
 	fdraw_str(x0 + 5, 1, F_8_BOLD, "%s", shift_state == SS_LOAD ? "SAVE" : "LOAD");

@@ -392,7 +392,7 @@ static void run_voice(u8 voice_id, u32* dst) {
 	drive *= 2.f / (resonance + 2.f);
 
 	// apply low pass gate and noise
-	if (using_sampler())
+	if (USING_SAMPLER)
 		apply_sample_lpg_noise(voice_id, voice, goal_lpg, noise_diff, drive, dst);
 	else
 		apply_subtractive_lpg_noise(voice_id, voice, goal_lpg, noise_diff, drive, resonance, dst);
@@ -414,12 +414,12 @@ void handle_synth_voices(u32* dst) {
 	for (u8 voice_id = 0; voice_id < NUM_VOICES; ++voice_id)
 		run_voice(voice_id, dst);
 	send_cvs();
-	if (using_sampler())
+	if (USING_SAMPLER)
 		sampler_playing_tick();
 }
 
 u8 draw_high_note(void) {
-	if (synth_max_pres > 1 && !(using_sampler() && !cur_sample_info.pitched))
+	if (synth_max_pres > 1 && !(USING_SAMPLER && !cur_sample_info.pitched))
 		return fdraw_str(0, 0, F_20_BOLD, "%s", note_name((high_string_pitch + 1024) / 2048));
 	else
 		return 0;

@@ -102,8 +102,23 @@ static void apply_cued_changes(void) {
 		needs_start_recalc = true;
 		cued_ptn_start = 255;
 	}
-	if (apply_cued_load_items() || needs_start_recalc)
+	if (apply_cued_mem_items() || needs_start_recalc)
 		recalc_start_step();
+}
+
+// only_filled returns 0 if the step doesn't hold any pressure data
+static PatternStringStep* string_step_ptr(u8 string_id, bool only_filled, u8 seq_step) {
+	if (preset_outdated() && only_filled)
+		return 0;
+	PatternStringStep* step = &cur_pattern_qtr[(seq_step >> 4) & 3].steps[seq_step & 15][string_id];
+	if (!only_filled)
+		return step;
+	// return pointer if any of its substeps hold pressure
+	for (u8 substep_id = 0; substep_id < 8; substep_id++)
+		if (step->pres[substep_id])
+			return step;
+	// otherwise return 0
+	return 0;
 }
 
 // == MAIN SEQ FUNCTIONS == //

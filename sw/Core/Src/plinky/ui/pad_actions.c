@@ -124,10 +124,8 @@ void handle_pad_actions(u8 strip_id, Touch* strip_cur) {
 			break;
 		case UI_LOAD:
 			// only samples cue immediately
-			if (pad_id >= SAMPLES_START && is_press_start) {
-				touch_load_item(pad_id);
-				cue_ram_item(pad_id);
-			}
+			if (pad_id >= SAMPLES_START && is_press_start)
+				cue_mem_item(pad_id);
 			break;
 		case UI_SETTINGS_MENU:
 			select_settings_item(strip_id, pad_y);
@@ -161,12 +159,12 @@ void handle_pad_action_long_presses(void) {
 	long_press_frames += 2;
 	// actions on long press
 	if (ui_mode == UI_LOAD && long_press_frames == LONGPRESS_THRESH) {
-		// sample pad (strip 7), load sample and enter sample edit mode (belongs in sampler)
+		// sample, open sampler
 		if (strip_id == 7)
 			open_sampler(pad_id & 7);
 		// patch or pattern, save or load
 		else
-			save_load_ram_item(pad_id);
+			save_load_mem_item(pad_id);
 	}
 }
 
@@ -180,7 +178,7 @@ bool mod_action_pressed(void) {
 bool pad_actions_oled_visuals(void) {
 	u8 delay = long_press_pad >= SAMPLES_START ? 32 : 1;
 	if (ui_mode == UI_LOAD && long_press_frames >= delay) {
-		draw_select_load_item(long_press_pad, long_press_frames - delay > 128);
+		draw_save_load_item(long_press_pad, long_press_frames - delay > 128);
 		inverted_rectangle(0, 0, long_press_frames - delay, 32);
 		return true;
 	}

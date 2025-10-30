@@ -11,8 +11,8 @@ void params_update_touch_pointers(void);
 bool arp_active(void);
 
 // main
-void init_presets(void);
-void revert_presets(void);
+bool update_preset(Preset* preset);
+void revert_preset(Preset* preset);
 void params_tick(void);
 
 // param retrieval calls
