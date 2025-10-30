@@ -33,8 +33,8 @@ static u8 ram_pattern_id = 255;
 static u8 ram_sample_id = 255;
 
 // ram item contents
-Preset cur_preset; // floating preset, the one we edit and use for sound generation
-static PatternQuarter cur_ptn_quarter[4];
+Preset cur_preset;                        // floating preset, the one we edit and use for sound generation
+static PatternQuarter cur_pattern_qtr[4]; // floating pattern, the one we edit and use for recording/playing
 SampleInfo cur_sample_info;
 
 // item to change to
@@ -43,7 +43,6 @@ static u8 cued_pattern_id = 255;
 static u8 cued_sample_id = 255;
 
 // history of above, used to check double press on the same item
-static u8 prev_cued_pattern_id = 255;
 static u8 prev_cued_sample_id = 255;
 
 static u8 edit_item_id = 255;   // ram item to edit | msb unset => save, msb set => clear
@@ -78,7 +77,7 @@ static bool sample_outdated(void) {
 PatternStringStep* string_step_ptr(u8 string_id, bool only_filled, u8 seq_step) {
 	if (preset_outdated() && only_filled)
 		return 0;
-	PatternStringStep* step = &cur_ptn_quarter[(seq_step >> 4) & 3].steps[seq_step & 15][string_id];
+	PatternStringStep* step = &cur_pattern_qtr[(seq_step >> 4) & 3].steps[seq_step & 15][string_id];
 	if (!only_filled)
 		return step;
 	// return pointer if any of its substeps hold pressure
@@ -116,7 +115,7 @@ void init_ram(void) {
 		sys_params.cv_quant = CVQ_OFF;
 		sys_params.reverse_encoder = false;
 		sys_params.preset_aligned = false;
-		sys_params.paddy = 0;
+		sys_params.pattern_aligned = false;
 		memset(sys_params.pad, 0, sizeof(sys_params.pad));
 		sys_params.version = REV_SYS_PARAMS_VERSION;
 		// fall through for further updating
@@ -138,12 +137,18 @@ void init_ram(void) {
 	}
 	codec_update_volume();
 	cur_preset_id = sys_params.preset_id;
-	// load floating preset
 	const Preset* cur_preset_ptr = cur_preset_flash_ptr();
 	if (cur_preset_ptr) {
+		// load floating preset
 		memcpy(&cur_preset, cur_preset_ptr, sizeof(Preset));
 		ram_preset_id = sys_params.preset_id;
+		// load floating pattern
+		for (u8 qtr = 0; qtr < 4; qtr++)
+			memcpy(&cur_pattern_qtr[qtr], cur_pattern_qtr_flash_ptr(qtr), sizeof(PatternQuarter));
+		cur_pattern_id = param_index_unmod(P_PATTERN);
+		ram_pattern_id = cur_pattern_id;
 	}
+
 	recent_load_item = cur_preset_id;
 	ram_initialized = true;
 }
@@ -210,11 +215,23 @@ void ram_frame(void) {
 				}
 				break;
 			case RAM_PATTERN:
-				memset(&cur_ptn_quarter, 0, sizeof(cur_ptn_quarter));
+				// clear floating pattern
+				memset(&cur_pattern_qtr, 0, 4 * sizeof(PatternQuarter));
 				log_ram_edit(SEG_PAT0);
 				log_ram_edit(SEG_PAT1);
 				log_ram_edit(SEG_PAT2);
 				log_ram_edit(SEG_PAT3);
+				// write floating pattern to pattern slot
+				u8 dst_page = 4 * (edit_item_id - PATTERNS_START) + PATTERNS_START;
+				for (u8 qtr = 0; qtr < 4; qtr++)
+					flash_write_page(&cur_pattern_qtr, sizeof(PatternQuarter), dst_page + qtr);
+				// update state
+				cur_pattern_id = edit_item_id;
+				ram_pattern_id = edit_item_id;
+				if (!sys_params.pattern_aligned) {
+					sys_params.pattern_aligned = true;
+					log_ram_edit(SEG_SYS);
+				}
 				break;
 			case RAM_SAMPLE:
 				memset(&cur_sample_info, 0, sizeof(SampleInfo));
@@ -234,11 +251,13 @@ void ram_frame(void) {
 				cur_preset_id = edit_item_id;
 				break;
 			case RAM_PATTERN: {
-				// u8 src_page = 4 * copy_pattern_id;
-				// u8 dst_page = 4 * (edit_item_id - PATTERNS_START) + PATTERNS_START;
-				// for (u8 qtr = 0; qtr < 4; ++qtr)
-				// 	flash_write_page(ptn_quarter_flash_ptr(src_page + qtr), sizeof(PatternQuarter), dst_page + qtr);
-				// save_param_index(P_PATTERN, edit_item_id - PATTERNS_START);
+				// write floating pattern to selected pattern slot
+				u8 ptn_id = edit_item_id - PATTERNS_START;
+				u8 dst_page = 4 * ptn_id + PATTERNS_START;
+				for (u8 qtr = 0; qtr < 4; ++qtr)
+					flash_write_page(cur_pattern_qtr_flash_ptr(qtr), sizeof(PatternQuarter), dst_page + qtr);
+				// make selected pattern active in preset - the fast loop will retrieve this when necessary
+				save_param_index(P_PATTERN, ptn_id);
 			} break;
 			default:
 				// samples don't copy
@@ -255,7 +274,7 @@ void ram_frame(void) {
 		if (need_flash_write(SEG_PAT0 + qtr, now)) {
 			last_flash_write[SEG_SYS] = last_ram_write[SEG_SYS];
 			last_flash_write[SEG_PAT0 + qtr] = last_ram_write[SEG_PAT0 + qtr];
-			flash_write_page(&cur_ptn_quarter[qtr], sizeof(PatternQuarter), PATTERNS_START + 4 * ram_pattern_id + qtr);
+			flash_write_page(&cur_pattern_qtr[qtr], sizeof(PatternQuarter), FLOAT_PATTERN_ID + qtr);
 		}
 	}
 	if (need_flash_write(SEG_SAMPLE, now)) {
@@ -278,9 +297,24 @@ static bool segment_outdated(RamSegment seg) {
 }
 
 void log_ram_edit(RamSegment segment) {
-	if (segment == SEG_PRESET && sys_params.preset_aligned) {
-		sys_params.preset_aligned = false;
-		last_ram_write[SEG_SYS] = millis();
+	switch (segment) {
+	case SEG_PRESET:
+		if (sys_params.preset_aligned) {
+			sys_params.preset_aligned = false;
+			last_ram_write[SEG_SYS] = millis();
+		}
+		break;
+	case SEG_PAT0:
+	case SEG_PAT1:
+	case SEG_PAT2:
+	case SEG_PAT3:
+		if (sys_params.pattern_aligned) {
+			sys_params.pattern_aligned = false;
+			last_ram_write[SEG_SYS] = millis();
+		}
+		break;
+	default:
+		break;
 	}
 	last_ram_write[segment] = millis();
 }
@@ -304,6 +338,8 @@ void update_preset_ram(bool force) {
 }
 
 void update_pattern_ram(bool force) {
+	if (!ram_initialized)
+		return;
 	cur_pattern_id = param_index(P_PATTERN);
 	// already up to date
 	if (!pattern_outdated() && !force)
@@ -314,8 +350,10 @@ void update_pattern_ram(bool force) {
 		return;
 	// retrieve pattern from flash
 	for (u8 qtr = 0; qtr < 4; ++qtr)
-		memcpy(&cur_ptn_quarter[qtr], ptn_quarter_flash_ptr(4 * cur_pattern_id + qtr), sizeof(cur_ptn_quarter[0]));
+		memcpy(&cur_pattern_qtr[qtr], pattern_qtr_flash_ptr(4 * cur_pattern_id + qtr), sizeof(PatternQuarter));
 	ram_pattern_id = cur_pattern_id;
+	sys_params.pattern_aligned = true;
+	log_ram_edit(SEG_SYS);
 }
 
 void update_sample_ram(bool force) {
@@ -363,10 +401,10 @@ void clear_ram_item(void) {
 }
 
 void save_load_ram_item(u8 item_id) {
-	// holding shift pad: save preset
+	// holding shift pad: save item
 	if (shift_state == SS_LOAD)
 		edit_item_id = item_id;
-	// not holding shift pad: cue preset for loading
+	// not holding shift pad: cue item for loading
 	else {
 		touch_load_item(item_id);
 		cue_ram_item(item_id);
@@ -415,8 +453,20 @@ void cue_ram_item(u8 item_id) {
 		cued_preset_id = item_id;
 		break;
 	case RAM_PATTERN: {
-		prev_cued_pattern_id = cued_pattern_id;
-		cued_pattern_id = item_id - PATTERNS_START;
+		u8 pattern_id = item_id - PATTERNS_START;
+		// want to cue current pattern => cancel cue
+		if (pattern_id == cur_pattern_id && sys_params.pattern_aligned) {
+			cued_pattern_id = 255;
+			return;
+		}
+		// load immediately
+		if (!seq_playing() || pattern_id == cued_pattern_id) {
+			save_param_index(P_PATTERN, pattern_id);
+			update_pattern_ram(true);
+			return;
+		}
+		// cue
+		cued_pattern_id = pattern_id;
 		break;
 	}
 	case RAM_SAMPLE: {
@@ -437,12 +487,6 @@ void try_apply_cued_ram_item(u8 item_id) {
 	// 2a. is the sequencer not playing? (save to make changes)
 	// 2b. or, was the same ram item pressed twice in a row? (force change while sequencer plays)
 	switch (get_item_type(item_id)) {
-	case RAM_PATTERN:
-		if (cued_pattern_id != 255 && (!seq_playing() || cued_pattern_id == prev_cued_pattern_id)) {
-			save_param_index(P_PATTERN, cued_pattern_id);
-			cued_pattern_id = 255;
-		}
-		break;
 	case RAM_SAMPLE:
 		if (cued_sample_id != 255 && (!seq_playing() || cued_sample_id == prev_cued_sample_id)) {
 			save_param_index(P_SAMPLE, cued_sample_id);
@@ -478,15 +522,16 @@ void draw_preset_name(u8 xtab) {
 }
 
 u8 draw_cued_pattern_id(bool with_arp_icon) {
-	if (cued_pattern_id != 255 && cued_pattern_id != cur_pattern_id)
-		return fdraw_str(0, 16, F_20_BOLD, "%c%d->%d", with_arp_icon ? I_NOTES[0] : I_SEQ[0], cur_pattern_id + 1,
-		                 cued_pattern_id + 1);
+	if (cued_pattern_id != 255)
+		return fdraw_str(0, 16, F_20_BOLD, "%c%d%s->%d", with_arp_icon ? I_NOTES[0] : I_SEQ[0], cur_pattern_id + 1,
+		                 sys_params.pattern_aligned ? "" : ".", cued_pattern_id + 1);
 	else
 		return 0;
 }
 
 void draw_pattern_id(bool with_arp_icon) {
-	fdraw_str(0, 16, F_20_BOLD, "%c%d", with_arp_icon ? I_NOTES[0] : I_SEQ[0], cur_pattern_id + 1, cur_pattern_id + 1);
+	fdraw_str(0, 16, F_20_BOLD, "%c%d%s", with_arp_icon ? I_NOTES[0] : I_SEQ[0], cur_pattern_id + 1,
+	          sys_params.pattern_aligned ? "" : ".");
 }
 
 void draw_sample_id(void) {
@@ -504,8 +549,12 @@ void draw_select_load_item(u8 item_id, bool done) {
 			          item_id + 1);
 		break;
 	case RAM_PATTERN:
-		fdraw_str(0, 0, F_16_BOLD, done ? "copied to " I_SEQ "%d" : "copy over\n" I_SEQ "Pat %d?",
-		          item_id - PATTERNS_START + 1);
+		if (shift_state == SS_LOAD)
+			fdraw_str(0, 0, F_16_BOLD, done ? "Saved\n " I_SEQ "pattern %d" : "Save\n" I_SEQ "pattern %d?",
+			          item_id - PATTERNS_START + 1);
+		else
+			fdraw_str(0, 0, F_16_BOLD, done ? "Loaded\n " I_SEQ "pattern %d" : "Load\n" I_SEQ "pattern %d?",
+			          item_id - PATTERNS_START + 1);
 		break;
 	case RAM_SAMPLE:
 		fdraw_str(0, 0, F_16_BOLD, done ? "ok!" : "Edit\n" I_WAVE "Sample %d?", item_id - SAMPLES_START + 1);

@@ -123,7 +123,8 @@ void handle_pad_actions(u8 strip_id, Touch* strip_cur) {
 				seq_set_end(pad_y * 8 + strip_id);
 			break;
 		case UI_LOAD:
-			if (pad_id >= NUM_PRESETS && is_press_start) {
+			// only samples cue immediately
+			if (pad_id >= SAMPLES_START && is_press_start) {
 				touch_load_item(pad_id);
 				cue_ram_item(pad_id);
 			}

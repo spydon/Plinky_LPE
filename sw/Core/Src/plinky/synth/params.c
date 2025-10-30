@@ -536,6 +536,10 @@ s8 param_index_poly(Param param_id, u8 string_id) {
 	return value_to_index(param_val_poly(param_id, string_id), param_range(param_id));
 }
 
+s8 param_index_unmod(Param param_id) {
+	return raw_to_index(cur_preset.params[param_id][SRC_BASE], param_range(param_id));
+}
+
 // == SAVING == //
 
 void save_param_raw(Param param_id, ModSource mod_src, s16 data) {

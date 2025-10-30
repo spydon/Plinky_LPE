@@ -19,7 +19,8 @@ void init_flash();
 
 const Preset* preset_flash_ptr(u8 preset_id);
 const Preset* cur_preset_flash_ptr();
-const PatternQuarter* ptn_quarter_flash_ptr(u8 quarter_id);
+const PatternQuarter* pattern_qtr_flash_ptr(u8 quarter_id);
+const PatternQuarter* cur_pattern_qtr_flash_ptr(u8 quarter);
 const SampleInfo* sample_info_flash_ptr(u8 sample0);
 
 // writing flash
