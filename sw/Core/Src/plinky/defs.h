@@ -65,7 +65,8 @@
 #define NUM_PTN_QUARTERS (NUM_PATTERNS * 4)
 #define F_SAMPLES_START (PATTERNS_START + NUM_PTN_QUARTERS)
 #define FLOAT_PRESET_ID (F_SAMPLES_START + NUM_SAMPLES)
-#define NUM_FLASH_ITEMS (FLOAT_PRESET_ID + 1)
+#define FLOAT_PATTERN_ID (FLOAT_PRESET_ID + 1)
+#define NUM_FLASH_ITEMS (FLOAT_PATTERN_ID + 4)
 
 // TIME
 
@@ -176,8 +177,8 @@ typedef struct SysParams {
 	u8 volume_msb : 3; // add 3 bits to make editing in 0-1024 range possible
 	u8 cv_quant : 2;
 	u8 reverse_encoder : 1;
-	u8 preset_aligned : 1; // is cur_preset identical to preset[preset_id]?
-	u8 paddy : 1;
+	u8 preset_aligned : 1;  // is cur_preset identical to preset[preset_id]?
+	u8 pattern_aligned : 1; // is cur_pattern_qtr identical to pattern[preset.params[P_PATTERN]]?
 	u8 pad[16 - 6];
 	u8 version;
 } SysParams;

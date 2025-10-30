@@ -70,12 +70,19 @@ const Preset* cur_preset_flash_ptr() {
 	return (Preset*)fp;
 }
 
-const PatternQuarter* ptn_quarter_flash_ptr(u8 quarter_id) {
+const PatternQuarter* pattern_qtr_flash_ptr(u8 quarter_id) {
 	if (quarter_id >= NUM_PTN_QUARTERS)
 		return (PatternQuarter*)zero;
 	FlashPage* fp = flash_page_ptr(latest_page_id[PATTERNS_START + quarter_id]);
 	if (fp->footer.idx != PATTERNS_START + quarter_id || fp->footer.version != FOOTER_VERSION)
 		return (PatternQuarter*)zero;
+	return (PatternQuarter*)fp;
+}
+
+const PatternQuarter* cur_pattern_qtr_flash_ptr(u8 quarter) {
+	FlashPage* fp = flash_page_ptr(latest_page_id[FLOAT_PATTERN_ID + quarter]);
+	if (fp->footer.idx != FLOAT_PATTERN_ID || fp->footer.version != FOOTER_VERSION)
+		return 0;
 	return (PatternQuarter*)fp;
 }
 
