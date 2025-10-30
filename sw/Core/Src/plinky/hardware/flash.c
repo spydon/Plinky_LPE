@@ -30,6 +30,7 @@ static_assert(sizeof(FlashPage) == 2048, "?");
 
 #define FLASH_ADDR_256 (0x08000000 + 256 * FLASH_PAGE_SIZE)
 #define FOOTER_VERSION 2
+#define FLASH_PAGE_PTR(page) ((FlashPage*)(FLASH_ADDR_256 + (page) * FLASH_PAGE_SIZE))
 
 const static u64 MAGIC = 0xf00dcafe473ff02a;
 const static u8 CALIB_PAGE = 255;
@@ -40,8 +41,6 @@ static u32 next_seq = 0;
 
 bool flash_busy = false;
 
-// flash pointers
-
 static u16 compute_hash(const void* data, int nbytes) {
 	u16 hash = 123;
 	const u8* src = (const u8*)data;
@@ -50,49 +49,13 @@ static u16 compute_hash(const void* data, int nbytes) {
 	return hash;
 }
 
-static FlashPage* flash_page_ptr(u8 page) {
-	return (FlashPage*)(FLASH_ADDR_256 + page * FLASH_PAGE_SIZE);
-}
-
 const Preset* preset_flash_ptr(u8 preset_id) {
 	if (preset_id >= NUM_PRESETS)
 		return init_params_ptr();
-	FlashPage* fp = flash_page_ptr(latest_page_id[preset_id]);
+	FlashPage* fp = FLASH_PAGE_PTR(latest_page_id[preset_id]);
 	if (fp->footer.idx != preset_id || fp->footer.version != FOOTER_VERSION)
 		return init_params_ptr();
 	return (Preset*)fp;
-}
-
-const Preset* cur_preset_flash_ptr() {
-	FlashPage* fp = flash_page_ptr(latest_page_id[FLOAT_PRESET_ID]);
-	if (fp->footer.idx != FLOAT_PRESET_ID || fp->footer.version != FOOTER_VERSION)
-		return 0;
-	return (Preset*)fp;
-}
-
-const PatternQuarter* pattern_qtr_flash_ptr(u8 quarter_id) {
-	if (quarter_id >= NUM_PTN_QUARTERS)
-		return (PatternQuarter*)zero;
-	FlashPage* fp = flash_page_ptr(latest_page_id[PATTERNS_START + quarter_id]);
-	if (fp->footer.idx != PATTERNS_START + quarter_id || fp->footer.version != FOOTER_VERSION)
-		return (PatternQuarter*)zero;
-	return (PatternQuarter*)fp;
-}
-
-const PatternQuarter* cur_pattern_qtr_flash_ptr(u8 quarter) {
-	FlashPage* fp = flash_page_ptr(latest_page_id[FLOAT_PATTERN_ID + quarter]);
-	if (fp->footer.idx != FLOAT_PATTERN_ID || fp->footer.version != FOOTER_VERSION)
-		return 0;
-	return (PatternQuarter*)fp;
-}
-
-const SampleInfo* sample_info_flash_ptr(u8 sample0) {
-	if (sample0 >= NUM_SAMPLES)
-		return (SampleInfo*)zero;
-	FlashPage* fp = flash_page_ptr(latest_page_id[F_SAMPLES_START + sample0]);
-	if (fp->footer.idx != F_SAMPLES_START + sample0 || fp->footer.version != FOOTER_VERSION)
-		return (SampleInfo*)zero;
-	return (SampleInfo*)fp;
 }
 
 // main
@@ -215,7 +178,7 @@ void init_flash() {
 	memset(&sys_params, 0, sizeof(sys_params));
 	// scan for the latest page for each object
 	for (u8 page = 0; page < 255; ++page) {
-		FlashPage* p = flash_page_ptr(page);
+		FlashPage* p = FLASH_PAGE_PTR(page);
 		u8 i = p->footer.idx;
 		if (i >= NUM_FLASH_ITEMS)
 			continue; // skip blank
@@ -238,7 +201,7 @@ void init_flash() {
 			next_free_page = page + 1;
 			sys_params = p->sys_params;
 		}
-		FlashPage* existing = flash_page_ptr(latest_page_id[i]);
+		FlashPage* existing = FLASH_PAGE_PTR(latest_page_id[i]);
 		if (existing->footer.idx != i || p->footer.seq > existing->footer.seq || existing->footer.version < 2)
 			latest_page_id[i] = page;
 	}
@@ -247,7 +210,7 @@ void init_flash() {
 
 // writing flash
 
-void flash_erase_page(u8 page) {
+static void flash_erase_page(u8 page) {
 	FLASH_WaitForLastOperation((u32)FLASH_TIMEOUT_VALUE);
 	SET_BIT(FLASH->CR, FLASH_CR_BKER); // bank 2
 	MODIFY_REG(FLASH->CR, FLASH_CR_PNB, ((page & 0xFFU) << FLASH_CR_PNB_Pos));
@@ -257,7 +220,7 @@ void flash_erase_page(u8 page) {
 	CLEAR_BIT(FLASH->CR, (FLASH_CR_PER | FLASH_CR_PNB));
 }
 
-void flash_write_block(void* dst, const void* src, int size) {
+static void flash_write_block(void* dst, const void* src, int size) {
 	u64* s = (u64*)src;
 	volatile u64* d = (volatile u64*)dst;
 	while (size >= 8) {
@@ -266,12 +229,12 @@ void flash_write_block(void* dst, const void* src, int size) {
 	}
 }
 
-void flash_write_page(const void* src, u32 size, u8 item_id) {
+static void flash_write_page(const void* src, u32 size, u8 item_id) {
 	flash_busy = true;
 	HAL_FLASH_Unlock();
 	bool in_use;
 	do {
-		FlashPage* p = flash_page_ptr(next_free_page);
+		FlashPage* p = FLASH_PAGE_PTR(next_free_page);
 		in_use = next_free_page == 255;
 		in_use |= (p->footer.idx < NUM_FLASH_ITEMS && latest_page_id[p->footer.idx] == next_free_page);
 		if (in_use)
@@ -293,7 +256,85 @@ void flash_write_page(const void* src, u32 size, u8 item_id) {
 	flash_busy = false;
 }
 
-// calib
+// read/write
+
+void flash_read_preset(u8 preset_id) {
+	const Preset* src = init_params_ptr();
+	if (preset_id < NUM_PRESETS) {
+		FlashPage* fp = FLASH_PAGE_PTR(latest_page_id[preset_id]);
+		if (fp->footer.idx == preset_id && fp->footer.version == FOOTER_VERSION)
+			src = (Preset*)fp;
+	}
+	memcpy(&cur_preset, src, sizeof(Preset));
+}
+
+bool flash_read_floating_preset(void) {
+	FlashPage* fp = FLASH_PAGE_PTR(latest_page_id[FLOAT_PRESET_ID]);
+	if (fp->footer.idx != FLOAT_PRESET_ID || fp->footer.version != FOOTER_VERSION)
+		return false;
+	memcpy(&cur_preset, (Preset*)fp, sizeof(Preset));
+	return true;
+}
+
+void flash_write_preset(u8 preset_id) {
+	if (preset_id < NUM_PRESETS)
+		flash_write_page(&cur_preset, sizeof(Preset), preset_id);
+}
+
+void flash_write_floating_preset(void) {
+	flash_write_page(&cur_preset, sizeof(Preset), FLOAT_PRESET_ID);
+}
+
+void flash_read_pattern(u8 pattern_id) {
+	if (pattern_id >= NUM_PATTERNS)
+		return;
+	u8 base_id = 4 * pattern_id;
+	for (u8 qtr = 0; qtr < 4; ++qtr) {
+		const PatternQuarter* src = (PatternQuarter*)zero;
+		FlashPage* fp = FLASH_PAGE_PTR(latest_page_id[PATTERNS_START + base_id + qtr]);
+		if (fp->footer.idx == PATTERNS_START + base_id + qtr && fp->footer.version == FOOTER_VERSION)
+			src = (PatternQuarter*)fp;
+		memcpy(&cur_pattern_qtr[qtr], src, sizeof(PatternQuarter));
+	}
+}
+
+bool flash_read_floating_pattern(void) {
+	FlashPage* fp = FLASH_PAGE_PTR(latest_page_id[FLOAT_PATTERN_ID]);
+	if (fp->footer.idx != FLOAT_PATTERN_ID || fp->footer.version != FOOTER_VERSION)
+		return false;
+	for (u8 qtr = 0; qtr < 4; ++qtr) {
+		fp = FLASH_PAGE_PTR(latest_page_id[FLOAT_PATTERN_ID + qtr]);
+		memcpy(&cur_pattern_qtr[qtr], (PatternQuarter*)fp, sizeof(PatternQuarter));
+	}
+	return true;
+}
+
+void flash_write_pattern(u8 pattern_id) {
+	if (pattern_id < NUM_PATTERNS) {
+		u8 base_id = PATTERNS_START + 4 * pattern_id;
+		for (u8 qtr = 0; qtr < 4; ++qtr)
+			flash_write_page(&cur_pattern_qtr[qtr], sizeof(PatternQuarter), base_id + qtr);
+	}
+}
+
+void flash_write_floating_quarter(u8 quarter) {
+	flash_write_page(&cur_pattern_qtr[quarter], sizeof(PatternQuarter), FLOAT_PATTERN_ID + quarter);
+}
+
+void flash_read_sample_info(u8 sample_id) {
+	const SampleInfo* src = (SampleInfo*)zero;
+	if (sample_id < NUM_SAMPLES) {
+		FlashPage* fp = FLASH_PAGE_PTR(latest_page_id[F_SAMPLES_START + sample_id]);
+		if (fp->footer.idx == F_SAMPLES_START + sample_id && fp->footer.version == FOOTER_VERSION)
+			src = (SampleInfo*)fp;
+	}
+	memcpy(&cur_sample_info, src, sizeof(SampleInfo));
+}
+
+void flash_write_sample_info(u8 sample_id) {
+	if (sample_id < NUM_SAMPLES)
+		flash_write_page(&cur_sample_info, sizeof(SampleInfo), F_SAMPLES_START + sample_id);
+}
 
 FlashCalibType flash_read_calib(void) {
 	FlashCalibType flash_calib_type = FLASH_CALIB_NONE;

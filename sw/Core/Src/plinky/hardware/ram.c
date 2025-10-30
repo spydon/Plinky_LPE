@@ -33,8 +33,8 @@ static u8 ram_pattern_id = 255;
 static u8 ram_sample_id = 255;
 
 // ram item contents
-Preset cur_preset;                        // floating preset, the one we edit and use for sound generation
-static PatternQuarter cur_pattern_qtr[4]; // floating pattern, the one we edit and use for recording/playing
+Preset cur_preset;                 // floating preset, the one we edit and use for sound generation
+PatternQuarter cur_pattern_qtr[4]; // floating pattern, the one we edit and use for recording/playing
 SampleInfo cur_sample_info;
 
 // item to change to
@@ -137,14 +137,11 @@ void init_ram(void) {
 	}
 	codec_update_volume();
 	cur_preset_id = sys_params.preset_id;
-	const Preset* cur_preset_ptr = cur_preset_flash_ptr();
-	if (cur_preset_ptr) {
-		// load floating preset
-		memcpy(&cur_preset, cur_preset_ptr, sizeof(Preset));
+	// load floating preset
+	if (flash_read_floating_preset()) {
 		ram_preset_id = sys_params.preset_id;
 		// load floating pattern
-		for (u8 qtr = 0; qtr < 4; qtr++)
-			memcpy(&cur_pattern_qtr[qtr], cur_pattern_qtr_flash_ptr(qtr), sizeof(PatternQuarter));
+		flash_read_floating_pattern();
 		cur_pattern_id = param_index_unmod(P_PATTERN);
 		ram_pattern_id = cur_pattern_id;
 	}
@@ -205,7 +202,7 @@ void ram_frame(void) {
 				memcpy(&cur_preset, init_params_ptr(), sizeof(Preset));
 				log_ram_edit(SEG_PRESET);
 				// write floating preset to preset slot
-				flash_write_page(&cur_preset, sizeof(Preset), edit_item_id);
+				flash_write_preset(edit_item_id);
 				// update state
 				cur_preset_id = edit_item_id;
 				ram_preset_id = edit_item_id;
@@ -222,9 +219,7 @@ void ram_frame(void) {
 				log_ram_edit(SEG_PAT2);
 				log_ram_edit(SEG_PAT3);
 				// write floating pattern to pattern slot
-				u8 dst_page = 4 * (edit_item_id - PATTERNS_START) + PATTERNS_START;
-				for (u8 qtr = 0; qtr < 4; qtr++)
-					flash_write_page(&cur_pattern_qtr, sizeof(PatternQuarter), dst_page + qtr);
+				flash_write_pattern(edit_item_id - PATTERNS_START);
 				// update state
 				cur_pattern_id = edit_item_id;
 				ram_pattern_id = edit_item_id;
@@ -246,16 +241,14 @@ void ram_frame(void) {
 			switch (item_type) {
 			case RAM_PRESET:
 				// write floating preset to selected preset slot
-				flash_write_page(&cur_preset, sizeof(Preset), edit_item_id);
+				flash_write_preset(edit_item_id);
 				// make selected preset active - the fast loop will retrieve this when necessary
 				cur_preset_id = edit_item_id;
 				break;
 			case RAM_PATTERN: {
 				// write floating pattern to selected pattern slot
 				u8 ptn_id = edit_item_id - PATTERNS_START;
-				u8 dst_page = 4 * ptn_id + PATTERNS_START;
-				for (u8 qtr = 0; qtr < 4; ++qtr)
-					flash_write_page(cur_pattern_qtr_flash_ptr(qtr), sizeof(PatternQuarter), dst_page + qtr);
+				flash_write_pattern(ptn_id);
 				// make selected pattern active in preset - the fast loop will retrieve this when necessary
 				save_param_index(P_PATTERN, ptn_id);
 			} break;
@@ -273,19 +266,18 @@ void ram_frame(void) {
 		if (need_flash_write(SEG_PAT0 + qtr, now)) {
 			last_flash_write[SEG_SYS] = last_ram_write[SEG_SYS];
 			last_flash_write[SEG_PAT0 + qtr] = last_ram_write[SEG_PAT0 + qtr];
-			flash_write_page(&cur_pattern_qtr[qtr], sizeof(PatternQuarter), FLOAT_PATTERN_ID + qtr);
+			flash_write_floating_quarter(qtr);
 		}
 	}
 	if (need_flash_write(SEG_SAMPLE, now)) {
 		last_flash_write[SEG_SYS] = last_ram_write[SEG_SYS];
 		last_flash_write[SEG_SAMPLE] = last_ram_write[SEG_SAMPLE];
-		if (ram_sample_id < NUM_SAMPLES)
-			flash_write_page(&cur_sample_info, sizeof(SampleInfo), F_SAMPLES_START + ram_sample_id);
+		flash_write_sample_info(ram_sample_id);
 	}
 	if (need_flash_write(SEG_PRESET, now) || need_flash_write(SEG_SYS, now)) {
 		last_flash_write[SEG_SYS] = last_ram_write[SEG_SYS];
 		last_flash_write[SEG_PRESET] = last_ram_write[SEG_PRESET];
-		flash_write_page(&cur_preset, sizeof(Preset), FLOAT_PRESET_ID);
+		flash_write_floating_preset();
 	}
 }
 
@@ -329,7 +321,7 @@ void update_preset_ram(bool force) {
 		return;
 	// retrieve preset from flash
 	clear_latch();
-	memcpy(&cur_preset, preset_flash_ptr(cur_preset_id), sizeof(Preset));
+	flash_read_preset(cur_preset_id);
 	ram_preset_id = cur_preset_id;
 	sys_params.preset_id = cur_preset_id;
 	sys_params.preset_aligned = true;
@@ -348,8 +340,7 @@ void update_pattern_ram(bool force) {
 	    || segment_outdated(SEG_PAT3))
 		return;
 	// retrieve pattern from flash
-	for (u8 qtr = 0; qtr < 4; ++qtr)
-		memcpy(&cur_pattern_qtr[qtr], pattern_qtr_flash_ptr(4 * cur_pattern_id + qtr), sizeof(PatternQuarter));
+	flash_read_pattern(cur_pattern_id);
 	ram_pattern_id = cur_pattern_id;
 	sys_params.pattern_aligned = true;
 	log_ram_edit(SEG_SYS);
@@ -364,10 +355,7 @@ void update_sample_ram(bool force) {
 	if (flash_busy || segment_outdated(SEG_SAMPLE))
 		return;
 	// retrieve sample info from flash
-	if (cur_sample_id < NUM_SAMPLES)
-		memcpy(&cur_sample_info, sample_info_flash_ptr(cur_sample_id), sizeof(SampleInfo));
-	else
-		memset(&cur_sample_info, 0, sizeof(SampleInfo));
+	flash_read_sample_info(cur_sample_id);
 	ram_sample_id = cur_sample_id;
 }
 
@@ -383,7 +371,7 @@ void load_preset(u8 preset_id, bool force) {
 // rj: this function is exclusively used by open_sampler, we might want to look at using the regular loading
 // implementation instead of this for open_sampler as well
 void load_sample(u8 sample_id) {
-	memcpy(&cur_sample_info, sample_info_flash_ptr(sample_id), sizeof(SampleInfo));
+	flash_read_sample_info(sample_id);
 	cur_sample_id = sample_id;
 	ram_sample_id = sample_id;
 	cued_sample_id = 255;
