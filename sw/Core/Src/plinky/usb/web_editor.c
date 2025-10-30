@@ -1,6 +1,5 @@
 #include "web_editor.h"
-#include "hardware/flash.h"
-#include "hardware/ram.h"
+#include "hardware/memory.h"
 #include "tusb.h"
 
 /* webusb wire format. 10 byte header, then data.

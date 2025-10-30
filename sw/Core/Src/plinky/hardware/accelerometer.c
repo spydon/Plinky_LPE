@@ -1,6 +1,6 @@
 #include "accelerometer.h"
 #include "../../lis2dh12_reg.h"
-#include "ram.h"
+#include "memory.h"
 #include "synth/params.h"
 
 // https://github.com/STMicroelectronics/STMems_Standard_C_drivers/blob/master/lis2dh12_STdC/example/lis2dh12_read_data_polling.c

@@ -4,7 +4,7 @@
 #include "data/tables.h"
 #include "gfx/gfx.h"
 #include "hardware/leds.h"
-#include "hardware/ram.h"
+#include "hardware/memory.h"
 #include "hardware/spi.h"
 #include "params.h"
 #include "strings.h"
@@ -468,7 +468,7 @@ void clear_flash_sample(void) {
 	for (u32 addr = 0; addr < MAX_SAMPLE_LEN * 2; addr += 65536)
 		spi_erase64k(addr + record_flashaddr_base, draw_sample_erasing, ++erase_pos);
 	memset(s, 0, sizeof(SampleInfo));
-	log_ram_edit(SEG_SAMPLE);
+	log_ram_edit(SEG_SAMPLE_INFO);
 	// re-enable spi
 	spi_state = 0;
 	sampler_mode = SM_PRE_ARMED;
@@ -521,7 +521,7 @@ void write_flash_sample_blocks(void) {
 		}
 		// recalc sample length
 		s->samplelen = buf_read_pos - buf_start_pos;
-		log_ram_edit(SEG_SAMPLE);
+		log_ram_edit(SEG_SAMPLE_INFO);
 		// sample full => stop recording
 		if (s->samplelen >= MAX_SAMPLE_LEN) {
 			stop_recording_sample();
@@ -537,7 +537,7 @@ void write_flash_sample_blocks(void) {
 		reverb_clear();
 		// clear out the raw audio in the delay_ram_buf
 		delay_clear();
-		log_ram_edit(SEG_SAMPLE);
+		log_ram_edit(SEG_SAMPLE_INFO);
 		// fill in the remaining split points
 		int startsamp = cur_sample_info.splitpoints[cur_slice_id];
 		int endsamp = cur_sample_info.samplelen;
@@ -547,7 +547,7 @@ void write_flash_sample_blocks(void) {
 			cur_sample_info.splitpoints[i] = samp;
 		}
 		cur_slice_id = 0;
-		log_ram_edit(SEG_SAMPLE);
+		log_ram_edit(SEG_SAMPLE_INFO);
 		sampler_mode = SM_PREVIEW;
 	}
 }
@@ -578,7 +578,7 @@ void finish_recording_sample(void) {
 	// clear out the raw audio in the delay_ram_buf
 	reverb_clear();
 	delay_clear();
-	log_ram_edit(SEG_SAMPLE); // fill in the remaining split points
+	log_ram_edit(SEG_SAMPLE_INFO); // fill in the remaining split points
 	int startsamp = cur_sample_info.splitpoints[cur_slice_id];
 	int endsamp = cur_sample_info.samplelen;
 	int n = 8 - cur_slice_id;
@@ -587,7 +587,7 @@ void finish_recording_sample(void) {
 		cur_sample_info.splitpoints[i] = samp;
 	}
 	cur_slice_id = 0;
-	log_ram_edit(SEG_SAMPLE);
+	log_ram_edit(SEG_SAMPLE_INFO);
 	sampler_mode = SM_PREVIEW;
 }
 
@@ -600,7 +600,7 @@ static void set_slice_point(u8 slice_id, float slice_pos) {
 	slice_pos = clampf(slice_pos, smin, smax);
 	if (cur_sample_info.splitpoints[slice_id] != slice_pos) {
 		cur_sample_info.splitpoints[slice_id] = slice_pos;
-		log_ram_edit(SEG_SAMPLE);
+		log_ram_edit(SEG_SAMPLE_INFO);
 	}
 }
 
@@ -632,7 +632,7 @@ void sampler_adjust_cur_slice_pitch(s8 diff) {
 	u8 newnote = clampi(cur_sample_info.notes[cur_slice_id] + diff, 0, 96);
 	if (newnote != cur_sample_info.notes[cur_slice_id]) {
 		cur_sample_info.notes[cur_slice_id] = newnote;
-		log_ram_edit(SEG_SAMPLE);
+		log_ram_edit(SEG_SAMPLE_INFO);
 	}
 }
 
@@ -640,12 +640,12 @@ void sampler_adjust_cur_slice_pitch(s8 diff) {
 
 void sampler_toggle_play_mode(void) {
 	cur_sample_info.pitched = !cur_sample_info.pitched;
-	log_ram_edit(SEG_SAMPLE);
+	log_ram_edit(SEG_SAMPLE_INFO);
 }
 
 void sampler_iterate_loop_mode(void) {
 	cur_sample_info.loop = (cur_sample_info.loop + 1) & 3;
-	log_ram_edit(SEG_SAMPLE);
+	log_ram_edit(SEG_SAMPLE_INFO);
 }
 
 void sampler_oled_visuals(void) {

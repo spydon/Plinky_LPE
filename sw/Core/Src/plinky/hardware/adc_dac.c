@@ -1,9 +1,8 @@
 #include "adc_dac.h"
 #include "encoder.h"
-#include "flash.h"
 #include "gfx/gfx.h"
 #include "leds.h"
-#include "ram.h"
+#include "memory.h"
 #include "synth/params.h"
 #include "touchstrips.h"
 

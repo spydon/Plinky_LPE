@@ -1,6 +1,6 @@
 #include "shift_states.h"
 #include "gfx/gfx.h"
-#include "hardware/ram.h"
+#include "hardware/memory.h"
 #include "pad_actions.h"
 #include "synth/params.h"
 #include "synth/sampler.h"

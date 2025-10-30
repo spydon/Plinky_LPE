@@ -5,9 +5,8 @@
 #include "hardware/accelerometer.h"
 #include "hardware/adc_dac.h"
 #include "hardware/encoder.h"
-#include "hardware/flash.h"
 #include "hardware/leds.h"
-#include "hardware/ram.h"
+#include "hardware/memory.h"
 #include "lfos.h"
 #include "param_defs.h"
 #include "sequencer.h"
@@ -553,7 +552,7 @@ void save_param_raw(Param param_id, ModSource mod_src, s16 data) {
 			return;
 		sys_params.volume_lsb = lsb;
 		sys_params.volume_msb = msb;
-		log_ram_edit(SEG_SYS);
+		log_ram_edit(SEG_SYS_PARAMS);
 		return;
 	case P_LATCH_TGL:
 		if (data >> 9 == 0)

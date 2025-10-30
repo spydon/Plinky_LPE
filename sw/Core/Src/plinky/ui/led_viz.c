@@ -1,7 +1,7 @@
 #include "led_viz.h"
 #include "hardware/adc_dac.h"
 #include "hardware/leds.h"
-#include "hardware/ram.h"
+#include "hardware/memory.h"
 #include "settings_menu.h"
 #include "shift_states.h"
 #include "synth/pitch_tools.h"

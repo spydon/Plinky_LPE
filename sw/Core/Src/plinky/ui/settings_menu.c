@@ -2,7 +2,7 @@
 #include "gfx/gfx.h"
 #include "hardware/adc_dac.h"
 #include "hardware/leds.h"
-#include "hardware/ram.h"
+#include "hardware/memory.h"
 #include "hardware/touchstrips.h"
 #include "synth/params.h"
 
@@ -136,7 +136,7 @@ static void save_value(u8 value) {
 	default:
 		break;
 	}
-	log_ram_edit(SEG_SYS);
+	log_ram_edit(SEG_SYS_PARAMS);
 }
 
 void open_settings_menu(void) {

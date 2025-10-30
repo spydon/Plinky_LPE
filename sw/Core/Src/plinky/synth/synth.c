@@ -4,7 +4,7 @@
 #include "data/tables.h"
 #include "gfx/gfx.h"
 #include "hardware/adc_dac.h"
-#include "hardware/ram.h"
+#include "hardware/memory.h"
 #include "pitch_tools.h"
 #include "sampler.h"
 #include "strings.h"

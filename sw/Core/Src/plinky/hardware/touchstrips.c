@@ -1,7 +1,7 @@
 #include "touchstrips.h"
-#include "flash.h"
 #include "gfx/gfx.h"
 #include "leds.h"
+#include "memory.h"
 #include "sensor_defs.h"
 #include "synth/audio.h"
 #include "ui/pad_actions.h"

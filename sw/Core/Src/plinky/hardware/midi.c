@@ -1,5 +1,5 @@
 #include "midi.h"
-#include "ram.h"
+#include "memory.h"
 #include "synth/params.h"
 #include "synth/strings.h"
 #include "synth/time.h"

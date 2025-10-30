@@ -39,10 +39,9 @@ SRCS = \
 	../Core/Src/plinky/hardware/codec.c \
 	../Core/Src/plinky/hardware/encoder.c \
 	../Core/Src/plinky/hardware/expander.c \
-	../Core/Src/plinky/hardware/flash.c \
 	../Core/Src/plinky/hardware/leds.c \
 	../Core/Src/plinky/hardware/midi.c \
-	../Core/Src/plinky/hardware/ram.c \
+	../Core/Src/plinky/hardware/memory.c \
 	../Core/Src/plinky/hardware/spi.c \
 	../Core/Src/plinky/hardware/touchstrips.c \
 	../Core/Src/plinky/synth/arp.c \
