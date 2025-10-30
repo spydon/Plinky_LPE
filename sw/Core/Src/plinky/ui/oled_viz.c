@@ -1,6 +1,6 @@
 #include "oled_viz.h"
 #include "gfx/gfx.h"
-#include "hardware/ram.h"
+#include "hardware/memory.h"
 #include "pad_actions.h"
 #include "settings_menu.h"
 #include "shift_states.h"

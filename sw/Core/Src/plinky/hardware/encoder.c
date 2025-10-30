@@ -1,5 +1,5 @@
 #include "encoder.h"
-#include "hardware/ram.h"
+#include "hardware/memory.h"
 #include "synth/params.h"
 #include "synth/sampler.h"
 #include "ui/settings_menu.h"

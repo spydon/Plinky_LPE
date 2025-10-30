@@ -4,7 +4,7 @@
 #include "hardware/accelerometer.h"
 #include "hardware/adc_dac.h"
 #include "hardware/expander.h"
-#include "hardware/ram.h"
+#include "hardware/memory.h"
 #include "params.h"
 #include "time.h"
 

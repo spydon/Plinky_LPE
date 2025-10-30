@@ -1,6 +1,6 @@
 #include "pad_actions.h"
 #include "gfx/gfx.h"
-#include "hardware/ram.h"
+#include "hardware/memory.h"
 #include "hardware/touchstrips.h"
 #include "settings_menu.h"
 #include "shift_states.h"

@@ -4,10 +4,9 @@
 #include "hardware/adc_dac.h"
 #include "hardware/codec.h"
 #include "hardware/encoder.h"
-#include "hardware/flash.h"
 #include "hardware/leds.h"
+#include "hardware/memory.h"
 #include "hardware/midi.h"
-#include "hardware/ram.h"
 #include "hardware/spi.h"
 #include "hardware/touchstrips.h"
 #include "synth/arp.h"
@@ -114,8 +113,7 @@ void plinky_init(void) {
 	init_midi();
 	init_usb();
 	init_leds();
-	init_flash();
-	init_ram();
+	init_memory();
 	init_presets();
 	launch_calib(0);
 	leds_bootswish();
@@ -202,7 +200,7 @@ void plinky_loop(void) {
 		// read accelerometer values
 		accel_read();
 		// ram updates and writing ram to flash
-		ram_frame();
+		memory_frame();
 		// web editor and usd midi data
 		usb_frame();
 		// execute actions triggered by setting menu

@@ -567,16 +567,16 @@ typedef enum FlashCalibType {
 	FLASH_CALIB_COMPLETE = 0b11,
 } FlashCalibType;
 
-typedef enum RamSegment {
+typedef enum MemSegment {
 	SEG_PRESET,
 	SEG_PAT0,
 	SEG_PAT1,
 	SEG_PAT2,
 	SEG_PAT3,
-	SEG_SYS,
-	SEG_SAMPLE,
-	NUM_RAM_SEGMENTS
-} RamSegment;
+	SEG_SYS_PARAMS,
+	SEG_SAMPLE_INFO,
+	NUM_MEM_SEGMENTS
+} MemSegment;
 
 // MIDI
 
