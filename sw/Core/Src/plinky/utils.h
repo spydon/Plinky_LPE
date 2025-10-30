@@ -108,6 +108,7 @@ static inline void DebugLog(const char* fmt, ...) {
 #define clz __builtin_clz
 #define unlikely(x) __builtin_expect((x), 0)
 #define SMUAD(o, a, b) asm("smuad %0, %1, %2" : "=r"(o) : "r"(a), "r"(b))
+#define USING_SAMPLER (cur_sample_info.samplelen != 0)
 
 static u8 const zero[2048] = {0};
 

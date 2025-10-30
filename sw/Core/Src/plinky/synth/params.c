@@ -154,210 +154,142 @@ static u8 get_og_range(Param param_id) {
 	}
 }
 
-void init_presets(void) {
-	u8 presets_updated = 0;
-	Font font = F_16;
-	Preset preset_backup;
-	memcpy(&preset_backup, &cur_preset, sizeof(Preset));
-	for (u8 preset_id = 0; preset_id < NUM_PRESETS; preset_id++) {
-		flash_read_preset(preset_id);
-		// clear volume mod sources
-		for (ModSource src = SRC_ENV2; src < NUM_MOD_SOURCES; ++src)
-			cur_preset.params[P_VOLUME][src] = 0;
-		switch (cur_preset.version) {
-		case LPE_PRESET_VERSION:
-			// correct!
-			break;
-		case 0:
-			// add mix width, switch value with (what used to be) accel sensitivity
-			for (u8 mod_id = SRC_BASE; mod_id < NUM_MOD_SOURCES; ++mod_id) {
-				s16 temp = cur_preset.params[P_MIX_WIDTH][mod_id];
-				cur_preset.params[P_MIX_WIDTH][mod_id] = cur_preset.params[P_MIX_UNUSED3][mod_id];
-				cur_preset.params[P_MIX_UNUSED3][mod_id] = temp;
-			}
-			// set default
-			cur_preset.params[P_MIX_WIDTH][SRC_BASE] = RAW_HALF;
-			cur_preset.version = 1;
-			// fall through for further upgrading
-		case 1:
-			// add lfo saw shape
-			for (u8 lfo_id = 0; lfo_id < NUM_LFOS; ++lfo_id) {
-				s16* data = cur_preset.params[P_A_SHAPE + lfo_id * 6];
-				*data = (*data * (NUM_LFO_SHAPES - 1)) / (NUM_LFO_SHAPES); // rescale to add extra enum entry
-				if (*data >= (LFO_SAW * RAW_SIZE) / NUM_LFO_SHAPES)        // and shift high numbers up
-					*data += (1 * RAW_SIZE) / NUM_LFO_SHAPES;
-			}
-			cur_preset.version = 2;
-			// fall through for further upgrading
-		case OG_PRESET_VERSION:
-			// upgrade to first LPE preset type
-			for (u8 param_id = 0; param_id < NUM_PARAMS; param_id++) {
-				s16 og_raw = cur_preset.params[param_id][SRC_BASE];
-				s16 lpe_raw = og_raw;
-				switch (param_id) {
-				// map full bipolar to unipolar range
-				case P_DISTORTION:
-				case P_SYN_WET_DRY:
-				case P_IN_WET_DRY:
-				case P_MIX_WIDTH:
-					lpe_raw = (og_raw + RAW_SIZE + 1) >> 1;
-					break;
-				// restrict to unipolar range
-				case P_ARP_EUC_LEN:
-				case P_SEQ_EUC_LEN:
-					lpe_raw = INDEX_TO_RAW((abs(og_raw) * get_og_range(param_id)) >> 10, param_range(param_id));
-					break;
-				// arp & latch, take from what used to be "flags"
-				case P_ARP_TGL:
-					lpe_raw = (cur_preset.pad & 0b01) << 9;
-					break;
-				case P_LATCH_TGL:
-					lpe_raw = (cur_preset.pad & 0b10) << 8;
-					break;
-				// synced lfos added, remap lfo rate
-				case P_A_RATE:
-				case P_B_RATE:
-				case P_X_RATE:
-				case P_Y_RATE:
-					lpe_raw = ((og_raw + RAW_SIZE + 1) >> 1) - RAW_SIZE;
-					break;
-				// delay time - invert polarity
-				case P_DLY_TIME:
-					og_raw = -og_raw;
-					lpe_raw = og_raw;
-					// free timing - the first 44 values didn't do anything
-					if (lpe_raw < 0)
-						lpe_raw = map_s16(mini(lpe_raw, -45), -45, -1024, -1, -1024);
-					// fall through
-				default:
-					// indeces - map more equally over raw range
-					if (param_is_index(param_id, SRC_BASE, og_raw))
-						lpe_raw = INDEX_TO_RAW((og_raw * get_og_range(param_id)) >> 10, param_range(param_id));
-					break;
-				}
-				cur_preset.params[param_id][SRC_BASE] = lpe_raw;
-			} // param loop
-			cur_preset.version = LPE_PRESET_VERSION;
-			flash_write_preset(preset_id);
-			presets_updated++;
-		} // version switch
-
-		// visuals
-		if (presets_updated) {
-			oled_clear();
-			draw_str_ctr(0, font, "updating");
-			draw_str_ctr(16, font, "presets");
-			if (preset_id < NUM_PRESETS / 2)
-				inverted_rectangle(0, 0, 8 * (preset_id + 1), OLED_HEIGHT);
-			else
-				inverted_rectangle(8 * (preset_id + 1 - NUM_PRESETS / 2), 0, OLED_WIDTH, OLED_HEIGHT);
-			oled_flip();
+bool update_preset(Preset* preset) {
+	// clear volume mod sources
+	for (ModSource src = SRC_ENV2; src < NUM_MOD_SOURCES; ++src)
+		preset->params[P_VOLUME][src] = 0;
+	switch (preset->version) {
+	case LPE_PRESET_VERSION:
+		// correct!
+		break;
+	case 0:
+		// add mix width, switch value with (what used to be) accel sensitivity
+		for (u8 mod_id = SRC_BASE; mod_id < NUM_MOD_SOURCES; ++mod_id) {
+			s16 temp = preset->params[P_MIX_WIDTH][mod_id];
+			preset->params[P_MIX_WIDTH][mod_id] = preset->params[P_MIX_UNUSED3][mod_id];
+			preset->params[P_MIX_UNUSED3][mod_id] = temp;
 		}
-	} // preset loop
-
-	// finish up
-	if (presets_updated) {
-		HAL_Delay(200);
-		oled_clear();
-		draw_str_ctr(0, font, "updated");
-		char str[16];
-		sprintf(str, "%d preset%s", presets_updated, presets_updated > 1 ? "s" : "");
-		draw_str_ctr(16, font, str);
-		oled_flip();
-		HAL_Delay(2000);
-	}
-	memcpy(&cur_preset, &preset_backup, sizeof(Preset));
-	draw_logo();
-}
-
-void revert_presets(void) {
-	Font font = F_16;
-
-	// revert system settings - only volume is relevant
-	sys_params.volume_lsb = mini(((sys_params.volume_msb << 8) + sys_params.volume_lsb) >> 4, 63) - 45;
-	sys_params.version = REV_SYS_PARAMS_VERSION;
-	oled_clear();
-	draw_str_ctr(0, font, "reverted");
-	draw_str_ctr(16, font, "system settings");
-	inverted_rectangle(0, 0, OLED_WIDTH, OLED_HEIGHT);
-	oled_flip();
-	HAL_Delay(2000);
-
-	for (u8 preset_id = 0; preset_id < NUM_PRESETS; preset_id++) {
-		// visuals
-		oled_clear();
-		draw_str_ctr(0, font, "reverting");
-		draw_str_ctr(16, font, "presets");
-		inverted_rectangle(4 * preset_id, 0, OLED_WIDTH, OLED_HEIGHT);
-		oled_flip();
-
-		flash_read_preset(preset_id);
+		// set default
+		preset->params[P_MIX_WIDTH][SRC_BASE] = RAW_HALF;
+		preset->version = 1;
+		// fall through for further upgrading
+	case 1:
+		// add lfo saw shape
+		for (u8 lfo_id = 0; lfo_id < NUM_LFOS; ++lfo_id) {
+			s16* data = preset->params[P_A_SHAPE + lfo_id * 6];
+			*data = (*data * (NUM_LFO_SHAPES - 1)) / (NUM_LFO_SHAPES); // rescale to add extra enum entry
+			if (*data >= (LFO_SAW * RAW_SIZE) / NUM_LFO_SHAPES)        // and shift high numbers up
+				*data += (1 * RAW_SIZE) / NUM_LFO_SHAPES;
+		}
+		preset->version = 2;
+		// fall through for further upgrading
+	case OG_PRESET_VERSION:
+		// upgrade to first LPE preset type
 		for (u8 param_id = 0; param_id < NUM_PARAMS; param_id++) {
-			s16 lpe_raw = cur_preset.params[param_id][SRC_BASE];
-			s16 og_raw = lpe_raw;
-			bool is_index = param_is_index(param_id, SRC_BASE, lpe_raw);
+			s16 og_raw = preset->params[param_id][SRC_BASE];
+			s16 lpe_raw = og_raw;
 			switch (param_id) {
-			// map unipolar to full bipolar range
+			// map full bipolar to unipolar range
 			case P_DISTORTION:
 			case P_SYN_WET_DRY:
 			case P_IN_WET_DRY:
 			case P_MIX_WIDTH:
-				og_raw = (lpe_raw << 1) - RAW_SIZE;
+				lpe_raw = (og_raw + RAW_SIZE + 1) >> 1;
 				break;
 			// restrict to unipolar range
-			case P_ARP_CHANCE:
-				og_raw = abs(lpe_raw);
+			case P_ARP_EUC_LEN:
+			case P_SEQ_EUC_LEN:
+				lpe_raw = INDEX_TO_RAW((abs(og_raw) * get_og_range(param_id)) >> 10, param_range(param_id));
 				break;
-			// arp & latch, save to "flags"
+			// arp & latch, take from what used to be "flags"
 			case P_ARP_TGL:
-				if (og_raw >= 512)
-					cur_preset.pad |= 0b01;
-				else
-					cur_preset.pad &= ~0b01;
+				lpe_raw = (preset->pad & 0b01) << 9;
 				break;
 			case P_LATCH_TGL:
-				if (og_raw >= 512)
-					cur_preset.pad |= 0b10;
-				else
-					cur_preset.pad &= ~0b10;
+				lpe_raw = (preset->pad & 0b10) << 8;
 				break;
-			// delay time - invert polarity
-			case P_DLY_TIME:
-				// free timing - insert 44 at the start
-				if (lpe_raw < 0)
-					lpe_raw = map_s16(lpe_raw, -1, -1024, -45, -1024);
-				og_raw = -lpe_raw;
-				break;
-			// no synced lfos
+			// synced lfos added, remap lfo rate
 			case P_A_RATE:
 			case P_B_RATE:
 			case P_X_RATE:
 			case P_Y_RATE:
-				og_raw = (-abs(lpe_raw) << 1) + RAW_SIZE;
+				lpe_raw = ((og_raw + RAW_SIZE + 1) >> 1) - RAW_SIZE;
 				break;
+			// delay time - invert polarity
+			case P_DLY_TIME:
+				og_raw = -og_raw;
+				lpe_raw = og_raw;
+				// free timing - the first 44 values didn't do anything
+				if (lpe_raw < 0)
+					lpe_raw = map_s16(mini(lpe_raw, -45), -45, -1024, -1, -1024);
+				// fall through
 			default:
-				// indeces - map to center of range
-				if (is_index)
-					og_raw = ((raw_to_index(lpe_raw, param_range(param_id)) << 10) + RAW_HALF) / get_og_range(param_id);
+				// indeces - map more equally over raw range
+				if (param_is_index(param_id, SRC_BASE, og_raw))
+					lpe_raw = INDEX_TO_RAW((og_raw * get_og_range(param_id)) >> 10, param_range(param_id));
 				break;
 			}
-			cur_preset.params[param_id][SRC_BASE] = og_raw;
-		}
-		cur_preset.version = OG_PRESET_VERSION;
-		flash_write_preset(preset_id);
-	} // preset loop
+			preset->params[param_id][SRC_BASE] = lpe_raw;
+		} // param loop
+		preset->version = LPE_PRESET_VERSION;
+		return true;
+	}
+	return false;
+}
 
-	// finish up
-	oled_clear();
-	draw_str_ctr(0, font, "presets");
-	draw_str_ctr(16, font, "reverted");
-	oled_flip();
-	HAL_Delay(2000);
-	oled_clear();
-	draw_str_ctr(0, font, "please turn");
-	draw_str_ctr(16, font, "off plinky!");
-	oled_flip();
-	while (true) {}
+void revert_preset(Preset* preset) {
+	for (u8 param_id = 0; param_id < NUM_PARAMS; param_id++) {
+		s16 lpe_raw = preset->params[param_id][SRC_BASE];
+		s16 og_raw = lpe_raw;
+		bool is_index = param_is_index(param_id, SRC_BASE, lpe_raw);
+		switch (param_id) {
+		// map unipolar to full bipolar range
+		case P_DISTORTION:
+		case P_SYN_WET_DRY:
+		case P_IN_WET_DRY:
+		case P_MIX_WIDTH:
+			og_raw = (lpe_raw << 1) - RAW_SIZE;
+			break;
+		// restrict to unipolar range
+		case P_ARP_CHANCE:
+			og_raw = abs(lpe_raw);
+			break;
+		// arp & latch, save to "flags"
+		case P_ARP_TGL:
+			if (og_raw >= 512)
+				preset->pad |= 0b01;
+			else
+				preset->pad &= ~0b01;
+			break;
+		case P_LATCH_TGL:
+			if (og_raw >= 512)
+				preset->pad |= 0b10;
+			else
+				preset->pad &= ~0b10;
+			break;
+		// delay time - invert polarity
+		case P_DLY_TIME:
+			// free timing - insert 44 at the start
+			if (lpe_raw < 0)
+				lpe_raw = map_s16(lpe_raw, -1, -1024, -45, -1024);
+			og_raw = -lpe_raw;
+			break;
+		// no synced lfos
+		case P_A_RATE:
+		case P_B_RATE:
+		case P_X_RATE:
+		case P_Y_RATE:
+			og_raw = (-abs(lpe_raw) << 1) + RAW_SIZE;
+			break;
+		default:
+			// indeces - map to center of range
+			if (is_index)
+				og_raw = ((raw_to_index(lpe_raw, param_range(param_id)) << 10) + RAW_HALF) / get_og_range(param_id);
+			break;
+		}
+		preset->params[param_id][SRC_BASE] = og_raw;
+	}
+	preset->version = OG_PRESET_VERSION;
 }
 
 static void apply_lfo_mods(Param param_id) {
@@ -777,7 +709,8 @@ void edit_param_from_encoder(s8 enc_diff, float enc_acc) {
 	case P_B_RATE:
 	case P_X_RATE:
 	case P_Y_RATE:
-		// these params are on a larger than 100.0 scale, every encoder tick (before acceleration) affects one raw step
+		// these params are on a larger than 100.0 scale, every encoder tick (before acceleration) affects one raw
+		// step
 		break;
 	default:
 		// these params are on a (+/-) 100.0 scale, every encoder tick (before acceleration) changes 0.1 exactly

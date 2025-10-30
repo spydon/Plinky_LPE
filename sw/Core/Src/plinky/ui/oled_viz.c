@@ -154,7 +154,7 @@ static void draw_visuals(void) {
 
 	switch (ui_mode) {
 	case UI_DEFAULT:
-		if (using_sampler())
+		if (USING_SAMPLER)
 			draw_sample_playback(&cur_sample_info);
 		else
 			draw_scope();
@@ -186,7 +186,7 @@ static void draw_visuals(void) {
 		seq_ptn_end_visuals();
 		break;
 	case UI_LOAD:
-		draw_ram_save_load();
+		draw_ui_load_label();
 
 		// top-left, priority: cued preset, current preset
 		u8 xtab = draw_cued_preset_id();

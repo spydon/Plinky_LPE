@@ -144,7 +144,7 @@ void web_editor_frame(void) {
 				break;
 			// request to save
 			case 1:
-				load_preset(header.idx, false);
+				load_preset(header.idx);
 				set_state(WU_RCV_DATA, ((u8*)&cur_preset) + wu_hdr_offset(), wu_hdr_len());
 				break;
 			}

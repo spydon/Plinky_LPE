@@ -9,7 +9,6 @@ extern s16 grain_buf_end[NUM_GRAINS];
 
 s16* grain_buf_ptr(void);
 
-int using_sampler(void);
 void open_sampler(u8 with_sample_id);
 
 // play sampler audio

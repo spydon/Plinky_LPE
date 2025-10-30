@@ -134,7 +134,7 @@ static void draw_main_leds(void) {
 				if (is_snap_param(x, y))
 					k = pulse_half;
 				// map loudness of each 8th of a slice to a pad
-				if (using_sampler() && !cur_sample_info.pitched) {
+				if (USING_SAMPLER && !cur_sample_info.pitched) {
 					int samp = sp0 + (((sp1 - sp0) * y) >> 3);
 					u16 avg_peak = getwaveform4zoom(&cur_sample_info, samp / 1024, 3) & 15;
 					k = maxi(k, avg_peak * 6);

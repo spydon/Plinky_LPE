@@ -114,7 +114,6 @@ void plinky_init(void) {
 	init_usb();
 	init_leds();
 	init_memory();
-	init_presets();
 	launch_calib(0);
 	leds_bootswish();
 	launch_calib(1);
@@ -148,7 +147,7 @@ void plinky_codec_tick(u32* audio_out, u32* audio_in) {
 	}
 
 	// make sure preset ram is up to date
-	update_preset_ram(false);
+	update_preset_ram();
 	// midi
 	process_midi();
 	// clock
@@ -160,8 +159,8 @@ void plinky_codec_tick(u32* audio_out, u32* audio_in) {
 	// evaluate parameters and modulations
 	params_tick();
 	// make sure sample and pattern ram is up to date
-	update_sample_ram(false);
-	update_pattern_ram(false);
+	update_sample_ram();
+	update_pattern_ram();
 	// generate the voices, based on touches and parameters
 	handle_synth_voices(audio_out);
 	// restart spi loop if necessary

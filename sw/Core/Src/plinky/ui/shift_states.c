@@ -83,11 +83,8 @@ void shift_set_state(ShiftState new_state) {
 		ui_mode = mode_a ? UI_EDITING_A : UI_EDITING_B;
 		break;
 	case SS_LOAD:
-		if (ui_mode != UI_LOAD) {
-			// activate preset load screen
-			ui_mode = UI_LOAD;
-			touch_load_item(cur_preset_id);
-		}
+		// activate preset load screen
+		ui_mode = UI_LOAD;
 		clear_long_press();
 		break;
 	case SS_LEFT:
@@ -243,9 +240,9 @@ void shift_hold_state(void) {
 		// an ss_load hold keeps ui_load open (simulate an action press)
 		if (shift_state == SS_LOAD && shift_state_frames == 32)
 			action_pressed_during_shift = true;
-		// after a delay, clear the last touched load item
+		// after a long clear press, clear the last touched memory item
 		if ((shift_state == SS_CLEAR) && (shift_state_frames == 64 + 4))
-			clear_ram_item();
+			clear_mem_item();
 		break;
 	case UI_SAMPLE_EDIT:
 		// long-pressing record or play in sampler preview mode records a new sample
@@ -270,7 +267,7 @@ bool shift_states_oled_visuals(void) {
 			return false;
 		case UI_LOAD:
 			if (shift_state_frames > 4) {
-				draw_clear_load_item(shift_state_frames - 4 > 64);
+				draw_clear_item(shift_state_frames - 4 > 64);
 				inverted_rectangle(0, 0, shift_state_frames * 2 - 4, 32);
 			}
 			break;

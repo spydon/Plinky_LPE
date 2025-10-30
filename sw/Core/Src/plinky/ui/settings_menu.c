@@ -4,7 +4,6 @@
 #include "hardware/leds.h"
 #include "hardware/memory.h"
 #include "hardware/touchstrips.h"
-#include "synth/params.h"
 
 #define NUM_ITEMS 64
 

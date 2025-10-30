@@ -5,45 +5,43 @@
 // it manages retrieving data from, and writing data to onboard flash when needed
 
 // ram ids
-extern u8 cur_preset_id;
-extern u8 cur_sample_id; // possibly remove after SPI cleanup
+extern u8 cur_preset_id; // only for web editor
 
 // ram contents
 extern SysParams sys_params;
-extern Preset cur_preset; // could be made local by optimizing sequencer & modulation
+extern Preset cur_preset;
 extern PatternQuarter cur_pattern_qtr[4];
-extern SampleInfo cur_sample_info; // possibly give sampler its own copy
+extern SampleInfo cur_sample_info;
 
-// flash functions
-
+// utils
+u32 get_sample_address(void);
 const Preset* preset_flash_ptr(u8 preset_id); // only for web editor
-void check_bootloader_flash(void);
-void flash_read_preset(u8 preset_id);  // only for params
-void flash_write_preset(u8 preset_id); // only for params
 
 // get ram state
-bool pattern_outdated(void);
+bool preset_outdated(void);  // only for sequencer
+bool pattern_outdated(void); // only for sequencer
+
+// init
+void check_bootloader_flash(void);
+void init_memory(void);
 
 // main
-PatternStringStep* string_step_ptr(u8 string_id, bool only_filled, u8 seq_step);
-
-void init_memory(void);
 void memory_frame(void);
+void revert_presets(void);
 
 // update ram
 void log_ram_edit(MemSegment segment);
-void update_preset_ram(bool force);
-void update_pattern_ram(bool force);
-void update_sample_ram(bool force);
+void update_preset_ram(void);
+void update_pattern_ram(void);
+void update_sample_ram(void);
 
-void load_preset(u8 preset_id, bool force); // only for web-editor
-void load_sample(u8 sample_id);             // only for open_sampler()
-
-void touch_load_item(u8 item_id);
-void clear_ram_item(void);
-void save_load_ram_item(u8 item_id);
-bool apply_cued_load_items(void);
-void cue_ram_item(u8 item_id);
+// save/load
+void load_preset(u8 preset_id); // only for web-editor
+void load_sample(u8 sample_id); // only for open_sampler()
+void clear_mem_item(void);
+void save_load_mem_item(u8 item_id);
+bool apply_cued_mem_items(void);
+void cue_mem_item(u8 item_id);
 void try_apply_cued_ram_item(u8 item_id);
 
 // calib
@@ -58,8 +56,8 @@ u8 draw_cued_pattern_id(bool with_arp_icon);
 void draw_pattern_id(bool with_arp_icon);
 void draw_preset_name(u8 xtab);
 void draw_sample_id(void);
-void draw_select_load_item(u8 item_id, bool done);
-void draw_clear_load_item(bool done);
-void draw_ram_save_load(void);
+void draw_save_load_item(u8 item_id, bool done);
+void draw_clear_item(bool done);
+void draw_ui_load_label(void);
 
 u8 ui_load_led(u8 x, u8 y, u8 pulse);

@@ -11,7 +11,6 @@
 #include "synth.h"
 
 #define MAX_SAMPLE_VOICES 6
-#define MAX_SAMPLE_LEN (1024 * 1024 * 2)  // max sample length in samples
 #define AVG_GRAINBUF_SAMPLE_SIZE (64 + 4) // 2 extra for interpolation, 2 extra for SPI address at the start
 #define GRAINBUF_BUDGET (AVG_GRAINBUF_SAMPLE_SIZE * NUM_GRAINS)
 
@@ -44,10 +43,6 @@ static u8 peak_hist_pos = 0;
 // 	return s->y1;
 // }
 
-int using_sampler(void) {
-	return cur_sample_info.samplelen;
-}
-
 void open_sampler(u8 with_sample_id) {
 	load_sample(with_sample_id);
 	save_param_index(P_SAMPLE, with_sample_id);
@@ -70,7 +65,7 @@ static int calcloopend(u8 slice_id) {
 }
 
 void sampler_recording_tick(u32* dst, u32* audioin) {
-	update_sample_ram(false);
+	update_sample_ram();
 	// while armed => check for incoming audio
 	if ((sampler_mode == SM_ARMED) && (audio_in_peak > 1024))
 		start_recording_sample();
@@ -350,7 +345,7 @@ void apply_sample_lpg_noise(u8 voice_id, Voice* voice, float goal_lpg, float noi
 void sampler_playing_tick(void) {
 	// decide on a priority for 8 voices
 	int gprio[8];
-	u32 sampleaddr = cur_sample_id * MAX_SAMPLE_LEN;
+	u32 sampleaddr = get_sample_address();
 
 	for (int i = 0; i < 8; ++i) {
 		GrainPair* g = voices[i].grain_pair;
@@ -443,7 +438,7 @@ u16 getwaveform4zoom(SampleInfo* s, int x, int zoom) { // x is 0-2048. returns a
 
 // reset all sample recording variables and initiate erasing the sample flash buffer
 void start_erasing_sample_buffer(void) {
-	record_flashaddr_base = 2 * MAX_SAMPLE_LEN * cur_sample_id;
+	record_flashaddr_base = 2 * get_sample_address();
 	cur_slice_id = 0;
 	buf_start_pos = 0;
 	buf_read_pos = 0;
