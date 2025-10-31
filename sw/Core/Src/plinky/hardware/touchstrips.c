@@ -429,7 +429,6 @@ void touch_calib(FlashCalibType flash_calib_type) {
 	u16 raw_pres_1back[NUM_TOUCH_READINGS] = {};
 	u8 cur_frame = touch_frame;
 	u8 readings_done = 0;
-	u16 errors = 0;
 	// display drawing
 	char help_text[64] = "slowly/evenly press lit pads\ntake care, be accurate";
 	u8 refresh_counter = 0;
@@ -443,8 +442,6 @@ void touch_calib(FlashCalibType flash_calib_type) {
 			oled_clear();
 			fdraw_str(0, 0, F_16, "Calibration%c", blink ? '!' : ' ');
 			draw_str(0, 16, F_8, help_text);
-			if (errors)
-				inverted_rectangle(0, 0, OLED_WIDTH, OLED_HEIGHT);
 			oled_flip();
 		}
 		else
@@ -509,24 +506,6 @@ void touch_calib(FlashCalibType flash_calib_type) {
 				touch_calib_data[read_id2].pos[pad] =
 				    reading_calib[read_id2].pos[pad] / reading_calib[read_id2].weight[pad];
 				cur_pad[read_id]--;
-
-				// a few pads have been handled, check for invalid value ranges
-				if (pad <= 4) {
-					errors &= ~(1 << read_id);
-					if (A_MAX(read_id) - A_MIN(read_id) < 1000) {
-						snprintf(help_text, sizeof(help_text), "!pad %d upper not conn\ncheck soldering", read_id + 1);
-						errors |= (1 << read_id);
-					}
-					else if (B_MAX(read_id) - B_MIN(read_id) < 1000) {
-						snprintf(help_text, sizeof(help_text), "!pad %d lower not conn\ncheck soldering", read_id + 1);
-						errors |= (1 << read_id);
-					}
-					else if (abs(touch_calib_data[read_id].pos[pad] - touch_calib_data[read_id].pos[PADS_PER_STRIP - 1])
-					         < 250) {
-						snprintf(help_text, sizeof(help_text), "!pad %d shorted?\ncheck soldering", read_id + 1);
-						errors |= (1 << read_id);
-					}
-				}
 			}
 		}
 
@@ -534,13 +513,10 @@ void touch_calib(FlashCalibType flash_calib_type) {
 		u8 pulse = triangle(millis());
 		for (u8 strip = 0; strip < NUM_TOUCHSTRIPS; ++strip) {
 			bool ready = (ready_mask & (1 << strip)) > 0;
-			bool err = (errors & (1 << strip)) > 0;
 			for (u8 pad = 0; pad < PADS_PER_STRIP; ++pad) {
 				u8 k = 0;
 				if (pad == cur_pad[strip])
 					k = ready ? pulse : (255 - reading_calib[strip].weight[pad] * 12.f);
-				if (err)
-					k = maxi(k, pulse / 2);
 				leds[strip][pad] = led_add_gamma(k);
 			}
 		}
