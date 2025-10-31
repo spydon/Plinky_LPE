@@ -219,7 +219,7 @@ void init_presets(void) {
 				case P_B_RATE:
 				case P_X_RATE:
 				case P_Y_RATE:
-					lpe_raw = -((og_raw + RAW_SIZE + 1) >> 1);
+					lpe_raw = ((og_raw + RAW_SIZE + 1) >> 1) - RAW_SIZE;
 					break;
 				// delay time - invert polarity
 				case P_DLY_TIME:
@@ -335,9 +335,7 @@ void revert_presets(void) {
 			case P_B_RATE:
 			case P_X_RATE:
 			case P_Y_RATE:
-				if (lpe_raw > 0)
-					lpe_raw = -RAW_SIZE + lpe_raw;
-				og_raw = (-lpe_raw << 1) - RAW_SIZE;
+				og_raw = (-abs(lpe_raw) << 1) + RAW_SIZE;
 				break;
 			default:
 				// indeces - map to center of range
