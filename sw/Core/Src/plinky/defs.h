@@ -340,6 +340,18 @@ typedef enum CVQuantType {
 	NUM_CV_QUANT_TYPES,
 } CVQuantType;
 
+typedef enum SysParam {
+	SYS_PRESET_ID,
+	SYS_MIDI_IN_CHAN,
+	SYS_MIDI_OUT_CHAN,
+	SYS_ACCEL_SENS,
+	SYS_VOLUME,
+	SYS_CV_QUANT,
+	SYS_REVERSE_ENCODER,
+	SYS_PRESET_ALIGNED,
+	SYS_PATTERN_ALIGNED,
+} SysParam;
+
 // PITCH
 
 typedef enum Scale {

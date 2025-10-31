@@ -124,6 +124,71 @@ const Preset* preset_flash_ptr(u8 preset_id) {
 	return (Preset*)fp;
 }
 
+void set_sys_param(SysParam param, u16 value) {
+	s32 saved_value = 0;
+	switch (param) {
+	case SYS_PRESET_ID:
+		saved_value = sys_params.preset_id;
+		break;
+	case SYS_MIDI_IN_CHAN:
+		saved_value = sys_params.midi_in_chan;
+		break;
+	case SYS_MIDI_OUT_CHAN:
+		saved_value = sys_params.midi_out_chan;
+		break;
+	case SYS_ACCEL_SENS:
+		saved_value = sys_params.accel_sens;
+		break;
+	case SYS_VOLUME:
+		saved_value = (sys_params.volume_msb << 8) + sys_params.volume_lsb;
+		break;
+	case SYS_CV_QUANT:
+		saved_value = sys_params.cv_quant;
+		break;
+	case SYS_REVERSE_ENCODER:
+		saved_value = sys_params.reverse_encoder;
+		break;
+	case SYS_PRESET_ALIGNED:
+		saved_value = sys_params.preset_aligned;
+		break;
+	case SYS_PATTERN_ALIGNED:
+		saved_value = sys_params.pattern_aligned;
+	}
+	if (value == saved_value)
+		return;
+	switch (param) {
+	case SYS_PRESET_ID:
+		sys_params.preset_id = value;
+		break;
+	case SYS_MIDI_IN_CHAN:
+		sys_params.midi_in_chan = value;
+		break;
+	case SYS_MIDI_OUT_CHAN:
+		sys_params.midi_out_chan = value;
+		break;
+	case SYS_ACCEL_SENS:
+		sys_params.accel_sens = value;
+		break;
+	case SYS_VOLUME:
+		sys_params.volume_lsb = value & 255;
+		sys_params.volume_msb = (value >> 8) & 7;
+		break;
+	case SYS_CV_QUANT:
+		sys_params.cv_quant = value;
+		break;
+	case SYS_REVERSE_ENCODER:
+		sys_params.reverse_encoder = value;
+		break;
+	case SYS_PRESET_ALIGNED:
+		sys_params.preset_aligned = value;
+		break;
+	case SYS_PATTERN_ALIGNED:
+		sys_params.pattern_aligned = value;
+		break;
+	}
+	log_ram_edit(SEG_SYS_PARAMS);
+}
+
 // == FLASH WRITING == //
 
 static void flash_erase_page(u8 page) {
@@ -354,9 +419,7 @@ void init_memory(void) {
 		// fall through for further updating
 	case REV_SYS_PARAMS_VERSION:
 		// initialized but volume in OG mapping - remap volume
-		u16 og_vol = clampi(((s8)sys_params.volume_lsb + 45) << 4, 0, RAW_SIZE);
-		sys_params.volume_lsb = og_vol & 255;
-		sys_params.volume_msb = (og_vol >> 8) & 7;
+		set_sys_param(SYS_VOLUME, clampi(((s8)sys_params.volume_lsb + 45) << 4, 0, RAW_SIZE));
 
 		// finalize
 		sys_params.version = LPE_SYS_PARAMS_VERSION;
@@ -518,8 +581,7 @@ void memory_frame(void) {
 		switch (item_type) {
 		case MEM_PRESET:
 			// update sys_params before writing to flash
-			sys_params.preset_aligned = true;
-			log_ram_edit(SEG_SYS_PARAMS);
+			set_sys_param(SYS_PRESET_ALIGNED, true);
 			// write floating preset to selected preset slot
 			flash_write_page(edit_item_id, &cur_preset);
 			// make selected preset active - the fast loop will retrieve this when necessary
@@ -527,8 +589,7 @@ void memory_frame(void) {
 			break;
 		case MEM_PATTERN: {
 			// update sys_params before writing to flash
-			sys_params.pattern_aligned = true;
-			log_ram_edit(SEG_SYS_PARAMS);
+			set_sys_param(SYS_PATTERN_ALIGNED, true);
 			// write floating pattern to selected pattern slot
 			u8 pattern_id = edit_item_id - PATTERNS_START;
 			u8 base_id = PATTERNS_START + 4 * pattern_id;
@@ -625,19 +686,13 @@ static bool segment_outdated(MemSegment segment) {
 void log_ram_edit(MemSegment segment) {
 	switch (segment) {
 	case SEG_PRESET:
-		if (sys_params.preset_aligned) {
-			sys_params.preset_aligned = false;
-			last_ram_write[SEG_SYS_PARAMS] = millis();
-		}
+		set_sys_param(SYS_PRESET_ALIGNED, false);
 		break;
 	case SEG_PAT0:
 	case SEG_PAT1:
 	case SEG_PAT2:
 	case SEG_PAT3:
-		if (sys_params.pattern_aligned) {
-			sys_params.pattern_aligned = false;
-			last_ram_write[SEG_SYS_PARAMS] = millis();
-		}
+		set_sys_param(SYS_PATTERN_ALIGNED, false);
 		break;
 	default:
 		break;
@@ -664,11 +719,8 @@ void update_preset_ram(void) {
 	log_ram_edit(SEG_PRESET);
 	// update state
 	ram_preset_id = cur_preset_id;
-	if (sys_params.preset_id != cur_preset_id || !sys_params.preset_aligned) {
-		sys_params.preset_id = cur_preset_id;
-		sys_params.preset_aligned = true;
-		log_ram_edit(SEG_SYS_PARAMS);
-	}
+	set_sys_param(SYS_PRESET_ID, cur_preset_id);
+	set_sys_param(SYS_PRESET_ALIGNED, true);
 }
 
 void update_pattern_ram(void) {
@@ -695,10 +747,7 @@ void update_pattern_ram(void) {
 	}
 	// update state
 	ram_pattern_id = cur_pattern_id;
-	if (!sys_params.pattern_aligned) {
-		sys_params.pattern_aligned = true;
-		log_ram_edit(SEG_SYS_PARAMS);
-	}
+	set_sys_param(SYS_PATTERN_ALIGNED, true);
 }
 
 void update_sample_ram(void) {

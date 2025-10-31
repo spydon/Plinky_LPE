@@ -478,13 +478,7 @@ void save_param_raw(Param param_id, ModSource mod_src, s16 data) {
 	// special cases
 	switch (param_id) {
 	case P_VOLUME:
-		u8 lsb = data & 255;
-		u8 msb = (data >> 8) & 7;
-		if (lsb == sys_params.volume_lsb && msb == sys_params.volume_msb)
-			return;
-		sys_params.volume_lsb = lsb;
-		sys_params.volume_msb = msb;
-		log_ram_edit(SEG_SYS_PARAMS);
+		set_sys_param(SYS_VOLUME, data);
 		return;
 	case P_LATCH_TGL:
 		if (data >> 9 == 0)

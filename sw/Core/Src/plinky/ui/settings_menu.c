@@ -93,49 +93,26 @@ static void select_item(Item item, bool force) {
 
 static void save_value(u8 value) {
 	value = clampi(value, 0, num_options[cur_item] - 1);
-	u8 saved_value = 0;
 	switch (cur_item) {
 	case I_ACCEL_SENS:
-		saved_value = sys_params.accel_sens;
+		set_sys_param(SYS_ACCEL_SENS, value);
 		break;
 	case I_ENC_DIR:
-		saved_value = sys_params.reverse_encoder;
+		set_sys_param(SYS_REVERSE_ENCODER, value);
 		break;
 	case I_MIDI_IN_CH:
-		saved_value = sys_params.midi_in_chan;
+		set_sys_param(SYS_MIDI_IN_CHAN, value);
 		break;
 	case I_MIDI_OUT_CH:
-		saved_value = sys_params.midi_out_chan;
+		set_sys_param(SYS_MIDI_OUT_CHAN, value);
 		break;
 	case I_CV_QUANT:
-		saved_value = sys_params.cv_quant;
+		set_sys_param(SYS_CV_QUANT, value);
 		break;
 	default:
 		break;
 	}
-	if (value == saved_value)
-		return;
 	cur_value = value;
-	switch (cur_item) {
-	case I_ACCEL_SENS:
-		sys_params.accel_sens = cur_value;
-		break;
-	case I_ENC_DIR:
-		sys_params.reverse_encoder = cur_value;
-		break;
-	case I_MIDI_IN_CH:
-		sys_params.midi_in_chan = cur_value;
-		break;
-	case I_MIDI_OUT_CH:
-		sys_params.midi_out_chan = cur_value;
-		break;
-	case I_CV_QUANT:
-		sys_params.cv_quant = cur_value;
-		break;
-	default:
-		break;
-	}
-	log_ram_edit(SEG_SYS_PARAMS);
 }
 
 void open_settings_menu(void) {
