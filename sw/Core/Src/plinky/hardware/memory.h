@@ -5,7 +5,7 @@
 // it manages retrieving data from, and writing data to onboard flash when needed
 
 // ram ids
-extern u8 cur_preset_id; // only for web editor
+extern u8 ram_preset_id; // only for web editor
 
 // ram contents
 extern SysParams sys_params;
