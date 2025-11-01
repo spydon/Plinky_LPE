@@ -64,13 +64,13 @@ static bool flash_busy = false;
 
 static bool ram_initialized = false;
 
-// item we are (or want to be) editing
-u8 cur_preset_id;
-static u8 cur_pattern_id = 0;
-static u8 cur_sample_id = 0;
+// load this item asap
+static u8 load_preset_id = 255;
+static u8 load_pattern_id = 255;
+static u8 load_sample_id = 255;
 
 // item actually in ram
-static u8 ram_preset_id = 255;
+u8 ram_preset_id = 255;
 static u8 ram_pattern_id = 255;
 static u8 ram_sample_id = 255;
 
@@ -112,7 +112,7 @@ static u16 compute_hash(const void* data, u16 nbytes) {
 }
 
 u32 get_sample_address(void) {
-	return cur_sample_id * MAX_SAMPLE_LEN;
+	return ram_sample_id * MAX_SAMPLE_LEN;
 }
 
 const Preset* preset_flash_ptr(u8 preset_id) {
@@ -238,15 +238,15 @@ static void flash_write_page(u8 item_id, const void* src) {
 // == RAM STATE == //
 
 bool preset_outdated(void) {
-	return cur_preset_id != ram_preset_id;
+	return load_preset_id != ram_preset_id;
 }
 
 bool pattern_outdated(void) {
-	return cur_pattern_id != ram_pattern_id;
+	return load_pattern_id != ram_pattern_id;
 }
 
 static bool sample_outdated(void) {
-	return cur_sample_id != ram_sample_id;
+	return load_sample_id != ram_sample_id;
 }
 
 // == INIT == //
@@ -476,27 +476,27 @@ void init_memory(void) {
 	// restore boot logo
 	draw_logo();
 
-	cur_preset_id = sys_params.preset_id;
+	load_preset_id = sys_params.preset_id;
 	// load floating preset
 	FlashPage* fp = LATEST_FLASH_PTR(FLOAT_PRESET_ID);
 	if (fp->footer.idx == FLOAT_PRESET_ID && fp->footer.version == FOOTER_VERSION) {
 		memcpy(&cur_preset, (Preset*)fp, sizeof(Preset));
-		ram_preset_id = cur_preset_id;
+		ram_preset_id = load_preset_id;
 		// load floating pattern
-		cur_pattern_id = param_index_unmod(P_PATTERN);
+		load_pattern_id = param_index_unmod(P_PATTERN);
 		for (u8 qtr = 0; qtr < 4; ++qtr)
 			memcpy(&cur_pattern_qtr[qtr], LATEST_FLASH_PTR(FLOAT_PATTERN_ID + qtr), sizeof(PatternQuarter));
-		ram_pattern_id = cur_pattern_id;
+		ram_pattern_id = load_pattern_id;
 	}
 	// no existing floating preset
 	else {
 		// load & save preset slot into floating preset
-		memcpy(&cur_preset, preset_flash_ptr(cur_preset_id), sizeof(Preset));
+		memcpy(&cur_preset, preset_flash_ptr(load_preset_id), sizeof(Preset));
 		flash_write_page(FLOAT_PRESET_ID, &cur_preset);
 		sys_params.preset_aligned = true;
 		// load & save pattern slot into floating pattern
-		cur_pattern_id = param_index_unmod(P_PATTERN);
-		u8 base_id = 4 * cur_pattern_id + PATTERNS_START;
+		load_pattern_id = param_index_unmod(P_PATTERN);
+		u8 base_id = 4 * load_pattern_id + PATTERNS_START;
 		for (u8 qtr = 0; qtr < 4; ++qtr) {
 			memcpy(&cur_pattern_qtr[qtr], LATEST_FLASH_PTR(base_id + qtr), sizeof(PatternQuarter));
 			flash_write_page(FLOAT_PATTERN_ID + qtr, &cur_pattern_qtr[qtr]);
@@ -504,8 +504,7 @@ void init_memory(void) {
 		sys_params.pattern_aligned = true;
 		log_ram_edit(SEG_SYS_PARAMS);
 	}
-
-	clear_item = cur_preset_id;
+	clear_item = load_preset_id;
 	ram_initialized = true;
 }
 
@@ -585,7 +584,7 @@ void memory_frame(void) {
 			// write floating preset to selected preset slot
 			flash_write_page(edit_item_id, &cur_preset);
 			// make selected preset active - the fast loop will retrieve this when necessary
-			cur_preset_id = edit_item_id;
+			load_preset_id = edit_item_id;
 			break;
 		case MEM_PATTERN: {
 			// update sys_params before writing to flash
@@ -712,21 +711,21 @@ void update_preset_ram(void) {
 	clear_latch();
 	// load cur_preset
 	const Preset* src = init_params_ptr();
-	FlashPage* fp = LATEST_FLASH_PTR(cur_preset_id);
-	if (fp->footer.idx == cur_preset_id && fp->footer.version == FOOTER_VERSION)
+	FlashPage* fp = LATEST_FLASH_PTR(load_preset_id);
+	if (fp->footer.idx == load_preset_id && fp->footer.version == FOOTER_VERSION)
 		src = (Preset*)fp;
 	memcpy(&cur_preset, src, sizeof(Preset));
 	log_ram_edit(SEG_PRESET);
 	// update state
-	ram_preset_id = cur_preset_id;
-	set_sys_param(SYS_PRESET_ID, cur_preset_id);
+	ram_preset_id = load_preset_id;
+	set_sys_param(SYS_PRESET_ID, ram_preset_id);
 	set_sys_param(SYS_PRESET_ALIGNED, true);
 }
 
 void update_pattern_ram(void) {
 	if (!ram_initialized)
 		return;
-	cur_pattern_id = param_index(P_PATTERN);
+	load_pattern_id = param_index(P_PATTERN);
 	// already up to date
 	if (!pattern_outdated())
 		return;
@@ -735,7 +734,7 @@ void update_pattern_ram(void) {
 	    || segment_outdated(SEG_PAT3))
 		return;
 	// load cur_pattern_qtr
-	u8 base_id = 4 * cur_pattern_id + PATTERNS_START;
+	u8 base_id = 4 * load_pattern_id + PATTERNS_START;
 	for (u8 qtr = 0; qtr < 4; ++qtr) {
 		u8 qtr_id = base_id + qtr;
 		const PatternQuarter* src = (PatternQuarter*)zero;
@@ -746,12 +745,12 @@ void update_pattern_ram(void) {
 		log_ram_edit(SEG_PAT0 + qtr);
 	}
 	// update state
-	ram_pattern_id = cur_pattern_id;
+	ram_pattern_id = load_pattern_id;
 	set_sys_param(SYS_PATTERN_ALIGNED, true);
 }
 
 void update_sample_ram(void) {
-	cur_sample_id = param_index(P_SAMPLE);
+	load_sample_id = param_index(P_SAMPLE);
 	// already up to date
 	if (!sample_outdated())
 		return;
@@ -760,21 +759,21 @@ void update_sample_ram(void) {
 		return;
 	// load cur_sample_info
 	const SampleInfo* src = (SampleInfo*)zero;
-	if (cur_sample_id < NUM_SAMPLES) {
-		FlashPage* fp = LATEST_FLASH_PTR(F_SAMPLES_START + cur_sample_id);
-		if (fp->footer.idx == F_SAMPLES_START + cur_sample_id && fp->footer.version == FOOTER_VERSION)
+	if (load_sample_id < NUM_SAMPLES) {
+		FlashPage* fp = LATEST_FLASH_PTR(F_SAMPLES_START + load_sample_id);
+		if (fp->footer.idx == F_SAMPLES_START + load_sample_id && fp->footer.version == FOOTER_VERSION)
 			src = (SampleInfo*)fp;
 	}
 	memcpy(&cur_sample_info, src, sizeof(SampleInfo));
-	ram_sample_id = cur_sample_id;
+	ram_sample_id = load_sample_id;
 }
 
 // == SAVE / LOAD == //
 
 void load_preset(u8 preset_id) {
-	if (preset_id == cur_preset_id)
+	if (preset_id == load_preset_id)
 		return;
-	cur_preset_id = preset_id;
+	load_preset_id = preset_id;
 	update_preset_ram();
 	clear_item = preset_id;
 }
@@ -782,7 +781,7 @@ void load_preset(u8 preset_id) {
 // rj: this function is exclusively used by open_sampler, we might want to look at using the regular loading
 // implementation instead of this for open_sampler as well
 void load_sample(u8 sample_id) {
-	cur_sample_id = sample_id;
+	save_param_index(P_SAMPLE, sample_id);
 	update_sample_ram();
 	cued_sample_id = 255;
 }
@@ -814,7 +813,7 @@ bool apply_cued_mem_items(void) {
 		cued_pattern_id = 255;
 		possible_seq_changes = true;
 	}
-	if (cued_sample_id != cur_sample_id && cued_sample_id != 255) {
+	if (cued_sample_id != load_sample_id && cued_sample_id != 255) {
 		save_param_index(P_SAMPLE, cued_sample_id);
 		cued_sample_id = 255;
 	}
@@ -828,7 +827,7 @@ void cue_mem_item(u8 item_id) {
 	switch (get_item_type(item_id)) {
 	case MEM_PRESET:
 		// want to cue current preset => cancel cue
-		if (item_id == cur_preset_id && sys_params.preset_aligned) {
+		if (item_id == load_preset_id && sys_params.preset_aligned) {
 			cued_preset_id = 255;
 			return;
 		}
@@ -843,7 +842,7 @@ void cue_mem_item(u8 item_id) {
 	case MEM_PATTERN: {
 		u8 pattern_id = item_id - PATTERNS_START;
 		// want to cue current pattern => cancel cue
-		if (pattern_id == cur_pattern_id && sys_params.pattern_aligned) {
+		if (pattern_id == load_pattern_id && sys_params.pattern_aligned) {
 			cued_pattern_id = 255;
 			return;
 		}
@@ -861,7 +860,7 @@ void cue_mem_item(u8 item_id) {
 		prev_cued_sample_id = cued_sample_id;
 		// pressing the current sample cues turning it off
 		u8 sample_id = item_id - SAMPLES_START;
-		cued_sample_id = (sample_id == cur_sample_id) ? NUM_SAMPLES : sample_id;
+		cued_sample_id = (sample_id == load_sample_id) ? NUM_SAMPLES : sample_id;
 		break;
 	}
 	default:
@@ -928,16 +927,18 @@ void flash_write_calib(FlashCalibType flash_calib_type) {
 
 // == VISUALS == //
 
+// we use load_*_ids to provide smoother visuals
+
 u8 draw_cued_preset_id(void) {
 	if (cued_preset_id != 255)
-		return fdraw_str(0, 0, F_20_BOLD, "%c%d%s->%d", I_PRESET[0], cur_preset_id + 1,
+		return fdraw_str(0, 0, F_20_BOLD, "%c%d%s->%d", I_PRESET[0], load_preset_id + 1,
 		                 sys_params.preset_aligned ? "" : ".", cued_preset_id + 1);
 	else
 		return 0;
 }
 
 u8 draw_preset_id(void) {
-	return fdraw_str(0, 0, F_20_BOLD, I_PRESET "%d%s", cur_preset_id + 1, sys_params.preset_aligned ? "" : ".");
+	return fdraw_str(0, 0, F_20_BOLD, I_PRESET "%d%s", load_preset_id + 1, sys_params.preset_aligned ? "" : ".");
 }
 
 void draw_preset_name(u8 xtab) {
@@ -953,19 +954,19 @@ void draw_preset_name(u8 xtab) {
 
 u8 draw_cued_pattern_id(bool with_arp_icon) {
 	if (cued_pattern_id != 255)
-		return fdraw_str(0, 16, F_20_BOLD, "%c%d%s->%d", with_arp_icon ? I_NOTES[0] : I_SEQ[0], cur_pattern_id + 1,
+		return fdraw_str(0, 16, F_20_BOLD, "%c%d%s->%d", with_arp_icon ? I_NOTES[0] : I_SEQ[0], load_pattern_id + 1,
 		                 sys_params.pattern_aligned ? "" : ".", cued_pattern_id + 1);
 	else
 		return 0;
 }
 
 void draw_pattern_id(bool with_arp_icon) {
-	fdraw_str(0, 16, F_20_BOLD, "%c%d%s", with_arp_icon ? I_NOTES[0] : I_SEQ[0], cur_pattern_id + 1,
+	fdraw_str(0, 16, F_20_BOLD, "%c%d%s", with_arp_icon ? I_NOTES[0] : I_SEQ[0], load_pattern_id + 1,
 	          sys_params.pattern_aligned ? "" : ".");
 }
 
 void draw_sample_id(void) {
-	fdraw_str(-128, 16, F_20_BOLD, cur_sample_id < NUM_SAMPLES ? I_WAVE "%d" : I_WAVE "Off", cur_sample_id + 1);
+	fdraw_str(-128, 16, F_20_BOLD, load_sample_id < NUM_SAMPLES ? I_WAVE "%d" : I_WAVE "Off", load_sample_id + 1);
 }
 
 void draw_save_load_item(u8 item_id, bool done) {
@@ -1037,11 +1038,11 @@ u8 ui_load_led(u8 x, u8 y, u8 pulse) {
 		k = pulse;
 
 	// full selected load item
-	if (item_id == cur_preset_id)
+	if (item_id == load_preset_id)
 		k = 255;
-	if (item_id == PATTERNS_START + cur_pattern_id)
+	if (item_id == PATTERNS_START + load_pattern_id)
 		k = 255;
-	if (item_id == SAMPLES_START + cur_sample_id)
+	if (item_id == SAMPLES_START + load_sample_id)
 		k = 255;
 
 	return k;
