@@ -3,6 +3,7 @@
 #include "gfx/gfx.h"
 #include "synth/audio.h"
 #include "synth/params.h"
+#include "synth/sampler.h"
 #include "synth/sequencer.h"
 #include "synth/strings.h"
 #include "ui/shift_states.h"
@@ -84,9 +85,6 @@ SampleInfo cur_sample_info;
 static u8 cued_preset_id = 255;
 static u8 cued_pattern_id = 255;
 static u8 cued_sample_id = 255;
-
-// history of above, used to check double press on the same item
-static u8 prev_cued_sample_id = 255;
 
 static u8 edit_item_id = 255; // ram item to edit | msb unset => save, msb set => clear
 static u8 clear_item;         // the item that will be cleared on an X long-press in UI_LOAD
@@ -759,7 +757,7 @@ void update_sample_ram(void) {
 		return;
 	// load cur_sample_info
 	const SampleInfo* src = (SampleInfo*)zero;
-	if (load_sample_id < NUM_SAMPLES) {
+	if (load_sample_id != NO_SAMPLE) {
 		FlashPage* fp = LATEST_FLASH_PTR(F_SAMPLES_START + load_sample_id);
 		if (fp->footer.idx == F_SAMPLES_START + load_sample_id && fp->footer.version == FOOTER_VERSION)
 			src = (SampleInfo*)fp;
@@ -776,28 +774,6 @@ void load_preset(u8 preset_id) {
 	load_preset_id = preset_id;
 	update_preset_ram();
 	clear_item = preset_id;
-}
-
-// rj: this function is exclusively used by open_sampler, we might want to look at using the regular loading
-// implementation instead of this for open_sampler as well
-void load_sample(u8 sample_id) {
-	save_param_index(P_SAMPLE, sample_id);
-	update_sample_ram();
-	cued_sample_id = 255;
-}
-
-// line up clear_item to be cleared during the next tick
-void clear_mem_item(void) {
-	edit_item_id = clear_item | 128;
-}
-
-void save_load_mem_item(u8 item_id) {
-	// holding shift pad: save item
-	if (shift_state == SS_LOAD)
-		edit_item_id = item_id;
-	// not holding shift pad: cue item for loading
-	else
-		cue_mem_item(item_id);
 }
 
 // returns true if there's a chance this made changes to the sequencer
@@ -821,9 +797,6 @@ bool apply_cued_mem_items(void) {
 }
 
 void cue_mem_item(u8 item_id) {
-	// triggered on touch start:
-	// - save what was cued into prev_cued, if they end up the same this is a double press
-	// - save touched pad as cued item
 	switch (get_item_type(item_id)) {
 	case MEM_PRESET:
 		// want to cue current preset => cancel cue
@@ -857,10 +830,19 @@ void cue_mem_item(u8 item_id) {
 		break;
 	}
 	case MEM_SAMPLE: {
-		prev_cued_sample_id = cued_sample_id;
-		// pressing the current sample cues turning it off
 		u8 sample_id = item_id - SAMPLES_START;
-		cued_sample_id = (sample_id == load_sample_id) ? NUM_SAMPLES : sample_id;
+		// pressing the current sample cues turning it off
+		if (sample_id == ram_sample_id)
+			sample_id = NO_SAMPLE;
+		// load immediately
+		if (!seq_playing() || sample_id == cued_sample_id) {
+			save_param_index(P_SAMPLE, sample_id);
+			update_sample_ram();
+			cued_sample_id = 255;
+			return;
+		}
+		// cue
+		cued_sample_id = sample_id;
 		break;
 	}
 	default:
@@ -869,21 +851,26 @@ void cue_mem_item(u8 item_id) {
 	clear_item = item_id;
 }
 
-void try_apply_cued_ram_item(u8 item_id) {
-	// triggered on pad release, conditionals:
-	// 1. is a ram item cued?
-	// 2a. is the sequencer not playing? (save to make changes)
-	// 2b. or, was the same ram item pressed twice in a row? (force change while sequencer plays)
-	switch (get_item_type(item_id)) {
-	case MEM_SAMPLE:
-		if (cued_sample_id != 255 && (!seq_playing() || cued_sample_id == prev_cued_sample_id)) {
-			save_param_index(P_SAMPLE, cued_sample_id);
-			cued_sample_id = 255;
-		}
-		break;
-	default:
-		break;
-	}
+// == UI == //
+
+void long_press_load_item(u8 item_id) {
+	bool is_sample = get_item_type(item_id) == MEM_SAMPLE;
+	// holding shift pad
+	if (shift_state == SS_LOAD)
+		// sample => open sampler
+		if (is_sample)
+			open_sampler(item_id & 7);
+		// preset or pattern => cue to save
+		else
+			edit_item_id = item_id;
+	// not holding shift pad: cue item for loading
+	else
+		cue_mem_item(item_id);
+}
+
+// line up clear_item to be cleared during the next tick
+void clear_mem_item(void) {
+	edit_item_id = clear_item | 128;
 }
 
 // == CALIB == //
@@ -966,7 +953,7 @@ void draw_pattern_id(bool with_arp_icon) {
 }
 
 void draw_sample_id(void) {
-	fdraw_str(-128, 16, F_20_BOLD, load_sample_id < NUM_SAMPLES ? I_WAVE "%d" : I_WAVE "Off", load_sample_id + 1);
+	fdraw_str(-128, 16, F_20_BOLD, load_sample_id == NO_SAMPLE ? I_WAVE "Off" : I_WAVE "%d", load_sample_id + 1);
 }
 
 void draw_save_load_item(u8 item_id, bool done) {
@@ -988,7 +975,22 @@ void draw_save_load_item(u8 item_id, bool done) {
 			          item_id - PATTERNS_START + 1);
 		break;
 	case MEM_SAMPLE:
-		fdraw_str(0, 0, F_16_BOLD, done ? "ok!" : "Edit\n" I_WAVE "Sample %d?", item_id - SAMPLES_START + 1);
+		if (shift_state == SS_LOAD)
+			fdraw_str(0, 0, F_16_BOLD, "Edit\n" I_WAVE "sample %d?", item_id - SAMPLES_START + 1);
+		else {
+			if (done) {
+				if (load_sample_id == NO_SAMPLE)
+					fdraw_str(0, 0, F_16_BOLD, "Deactivated\n " I_WAVE "sample");
+				else
+					fdraw_str(0, 0, F_16_BOLD, "Loaded\n " I_WAVE "sample %d", item_id - SAMPLES_START + 1);
+			}
+			else {
+				if (item_id - SAMPLES_START == ram_sample_id)
+					fdraw_str(0, 0, F_16_BOLD, "Deactivate\n" I_WAVE "sample?");
+				else
+					fdraw_str(0, 0, F_16_BOLD, "Load\n" I_WAVE "sample %d?", item_id - SAMPLES_START + 1);
+			}
+		}
 		break;
 	default:
 		break;

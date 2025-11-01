@@ -8,7 +8,7 @@
 #include "synth/sampler.h"
 #include "synth/sequencer.h"
 
-#define LONGPRESS_THRESH 160 // full read cycles
+#define LONGPRESS_THRESH 132 // full read cycles
 
 u8 long_press_pad = 0;
 
@@ -47,14 +47,10 @@ void handle_pad_actions(u8 strip_id, Touch* strip_cur) {
 		}
 	}
 
-	else {                                                                    // pressure under 100,
-		strip_holds_valid_action &= ~strip_mask;                              // clear valid action flag
-		if ((strip_is_action_pressed & strip_mask) && strip_cur->pres <= 0) { // pressure under 0,
-			strip_is_action_pressed &= ~strip_mask;                           // clear pressed flag
-			// release in load preset mode
-			if (ui_mode == UI_LOAD)
-				try_apply_cued_ram_item(long_press_pad);
-		}
+	else {                                                                  // pressure under 100,
+		strip_holds_valid_action &= ~strip_mask;                            // clear valid action flag
+		if ((strip_is_action_pressed & strip_mask) && strip_cur->pres <= 0) // pressure under 0,
+			strip_is_action_pressed &= ~strip_mask;                         // clear pressed flag
 	}
 
 	// == executing actions == //
@@ -122,13 +118,10 @@ void handle_pad_actions(u8 strip_id, Touch* strip_cur) {
 			if (is_press_start)
 				seq_set_end(pad_y * 8 + strip_id);
 			break;
-		case UI_LOAD:
-			// only samples cue immediately
-			if (pad_id >= SAMPLES_START && is_press_start)
-				cue_mem_item(pad_id);
-			break;
 		case UI_SETTINGS_MENU:
 			select_settings_item(strip_id, pad_y);
+			break;
+		default:
 			break;
 		} // mode
 	}
@@ -158,14 +151,8 @@ void handle_pad_action_long_presses(void) {
 	// increase counter
 	long_press_frames += 2;
 	// actions on long press
-	if (ui_mode == UI_LOAD && long_press_frames == LONGPRESS_THRESH) {
-		// sample, open sampler
-		if (strip_id == 7)
-			open_sampler(pad_id & 7);
-		// patch or pattern, save or load
-		else
-			save_load_mem_item(pad_id);
-	}
+	if (ui_mode == UI_LOAD && long_press_frames == LONGPRESS_THRESH)
+		long_press_load_item(pad_id);
 }
 
 // == VISUALS == //
@@ -176,10 +163,9 @@ bool mod_action_pressed(void) {
 
 // returns whether this produced screen-filling graphics
 bool pad_actions_oled_visuals(void) {
-	u8 delay = long_press_pad >= SAMPLES_START ? 32 : 1;
-	if (ui_mode == UI_LOAD && long_press_frames >= delay) {
-		draw_save_load_item(long_press_pad, long_press_frames - delay > 128);
-		inverted_rectangle(0, 0, long_press_frames - delay, 32);
+	if (ui_mode == UI_LOAD && long_press_frames > 0) {
+		draw_save_load_item(long_press_pad, long_press_frames >= LONGPRESS_THRESH);
+		inverted_rectangle(0, 0, long_press_frames, 32);
 		return true;
 	}
 	return false;
