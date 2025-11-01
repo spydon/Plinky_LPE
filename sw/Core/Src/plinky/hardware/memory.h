@@ -38,12 +38,12 @@ void update_sample_ram(void);
 
 // save/load
 void load_preset(u8 preset_id); // only for web-editor
-void load_sample(u8 sample_id); // only for open_sampler()
-void clear_mem_item(void);
-void save_load_mem_item(u8 item_id);
 bool apply_cued_mem_items(void);
 void cue_mem_item(u8 item_id);
-void try_apply_cued_ram_item(u8 item_id);
+
+// ui
+void long_press_load_item(u8 item_id);
+void clear_mem_item(void);
 
 // calib
 FlashCalibType flash_read_calib(void);

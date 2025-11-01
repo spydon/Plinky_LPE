@@ -44,10 +44,10 @@ static u8 peak_hist_pos = 0;
 // }
 
 void open_sampler(u8 with_sample_id) {
-	load_sample(with_sample_id);
 	save_param_index(P_SAMPLE, with_sample_id);
-	ui_mode = UI_SAMPLE_EDIT;
+	update_sample_ram();
 	cur_slice_id = 7;
+	ui_mode = UI_SAMPLE_EDIT;
 }
 
 // == PLAY SAMPLER AUDIO == //
