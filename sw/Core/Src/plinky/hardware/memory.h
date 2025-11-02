@@ -38,7 +38,7 @@ void update_sample_ram(void);
 
 // save/load
 void load_preset(u8 preset_id); // only for web-editor
-bool apply_cued_mem_items(void);
+void apply_cued_mem_items(void);
 void cue_mem_item(u8 item_id);
 
 // ui

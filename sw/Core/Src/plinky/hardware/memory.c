@@ -769,31 +769,24 @@ void update_sample_ram(void) {
 // == SAVE / LOAD == //
 
 void load_preset(u8 preset_id) {
-	if (preset_id == load_preset_id)
-		return;
 	load_preset_id = preset_id;
 	update_preset_ram();
 	clear_item = preset_id;
 }
 
-// returns true if there's a chance this made changes to the sequencer
-bool apply_cued_mem_items(void) {
-	bool possible_seq_changes = false;
+void apply_cued_mem_items(void) {
 	if (cued_preset_id != 255) {
 		load_preset(cued_preset_id);
 		cued_preset_id = 255;
-		possible_seq_changes = true;
 	}
 	if (cued_pattern_id != 255) {
 		save_param_index(P_PATTERN, cued_pattern_id);
 		cued_pattern_id = 255;
-		possible_seq_changes = true;
 	}
 	if (cued_sample_id != load_sample_id && cued_sample_id != 255) {
 		save_param_index(P_SAMPLE, cued_sample_id);
 		cued_sample_id = 255;
 	}
-	return possible_seq_changes;
 }
 
 void cue_mem_item(u8 item_id) {
