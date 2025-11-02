@@ -86,6 +86,9 @@ static u8 cued_preset_id = 255;
 static u8 cued_pattern_id = 255;
 static u8 cued_sample_id = 255;
 
+static bool force_load_preset = false;
+static bool force_load_pattern = false;
+
 static u8 edit_item_id = 255; // ram item to edit | msb unset => save, msb set => clear
 static u8 clear_item;         // the item that will be cleared on an X long-press in UI_LOAD
 
@@ -701,7 +704,7 @@ void update_preset_ram(void) {
 	if (!ram_initialized)
 		return;
 	// already up to date
-	if (!preset_outdated())
+	if (!preset_outdated() && !force_load_preset)
 		return;
 	// flash is not ready
 	if (flash_busy || segment_outdated(SEG_PRESET))
@@ -718,6 +721,7 @@ void update_preset_ram(void) {
 	ram_preset_id = load_preset_id;
 	set_sys_param(SYS_PRESET_ID, ram_preset_id);
 	set_sys_param(SYS_PRESET_ALIGNED, true);
+	force_load_preset = false;
 }
 
 void update_pattern_ram(void) {
@@ -725,7 +729,7 @@ void update_pattern_ram(void) {
 		return;
 	load_pattern_id = param_index(P_PATTERN);
 	// already up to date
-	if (!pattern_outdated())
+	if (!pattern_outdated() && !force_load_pattern)
 		return;
 	// flash is not ready
 	if (flash_busy || segment_outdated(SEG_PAT0) || segment_outdated(SEG_PAT1) || segment_outdated(SEG_PAT2)
@@ -745,6 +749,7 @@ void update_pattern_ram(void) {
 	// update state
 	ram_pattern_id = load_pattern_id;
 	set_sys_param(SYS_PATTERN_ALIGNED, true);
+	force_load_pattern = false;
 }
 
 void update_sample_ram(void) {
@@ -770,8 +775,15 @@ void update_sample_ram(void) {
 
 void load_preset(u8 preset_id) {
 	load_preset_id = preset_id;
+	force_load_preset = true;
 	update_preset_ram();
 	clear_item = preset_id;
+}
+
+static void load_pattern(u8 pattern_id) {
+	save_param_index(P_PATTERN, pattern_id);
+	force_load_pattern = true;
+	update_pattern_ram();
 }
 
 void apply_cued_mem_items(void) {
@@ -780,7 +792,7 @@ void apply_cued_mem_items(void) {
 		cued_preset_id = 255;
 	}
 	if (cued_pattern_id != 255) {
-		save_param_index(P_PATTERN, cued_pattern_id);
+		load_pattern(cued_pattern_id);
 		cued_pattern_id = 255;
 	}
 	if (cued_sample_id != load_sample_id && cued_sample_id != 255) {
@@ -792,7 +804,7 @@ void apply_cued_mem_items(void) {
 void cue_mem_item(u8 item_id) {
 	switch (get_item_type(item_id)) {
 	case MEM_PRESET:
-		// want to cue current preset => cancel cue
+		// want to cue identical preset => cancel cue
 		if (item_id == load_preset_id && sys_params.preset_aligned) {
 			cued_preset_id = 255;
 			return;
@@ -800,6 +812,7 @@ void cue_mem_item(u8 item_id) {
 		// load immediately
 		if (!seq_playing() || item_id == cued_preset_id) {
 			load_preset(item_id);
+			cued_preset_id = 255;
 			return;
 		}
 		// cue
@@ -807,15 +820,15 @@ void cue_mem_item(u8 item_id) {
 		break;
 	case MEM_PATTERN: {
 		u8 pattern_id = item_id - PATTERNS_START;
-		// want to cue current pattern => cancel cue
+		// want to cue identical pattern => cancel cue
 		if (pattern_id == load_pattern_id && sys_params.pattern_aligned) {
 			cued_pattern_id = 255;
 			return;
 		}
 		// load immediately
 		if (!seq_playing() || pattern_id == cued_pattern_id) {
-			save_param_index(P_PATTERN, pattern_id);
-			update_pattern_ram();
+			load_pattern(pattern_id);
+			cued_pattern_id = 255;
 			return;
 		}
 		// cue
