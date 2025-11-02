@@ -77,7 +77,7 @@ static void recalc_start_step(void) {
 	align_cur_step();
 }
 
-static void jump_to_step(u8 step) {
+static void set_step(u8 step) {
 	cur_seq_step = step;
 	last_edited_step_global = 255;
 	align_cur_step();
@@ -91,19 +91,19 @@ static void seq_set_start(u8 new_step) {
 	log_ram_edit(SEG_PRESET);
 	recalc_start_step();
 	// set the new absolute step position
-	jump_to_step((cur_seq_start + relative_step) & 63);
+	set_step((cur_seq_start + relative_step) & 63);
 }
 
 static void apply_cued_changes(void) {
-	bool needs_start_recalc = false;
 	// apply new start step
 	if (cued_ptn_start != 255) {
 		seq_set_start(cued_ptn_start);
-		needs_start_recalc = true;
 		cued_ptn_start = 255;
 	}
-	if (apply_cued_mem_items() || needs_start_recalc)
-		recalc_start_step();
+	// apply cued memory items
+	apply_cued_mem_items();
+	// align start step (only for new preset)
+	recalc_start_step();
 }
 
 // only_filled returns 0 if the step doesn't hold any pressure data
@@ -123,17 +123,31 @@ static PatternStringStep* string_step_ptr(u8 string_id, bool only_filled, u8 seq
 
 // == MAIN SEQ FUNCTIONS == //
 
+// returns whether this wrapped
+bool seq_inc_step(void) {
+	u8 prev_step = cur_seq_step;
+	set_step((cur_seq_step + 1) & 63);
+	return cur_seq_step <= prev_step;
+}
+
+// returns whether this wrapped
+static bool seq_dec_step(void) {
+	u8 prev_step = cur_seq_step;
+	set_step((cur_seq_step + 64 - 1) & 63);
+	return cur_seq_step >= prev_step;
+}
+
 // perform a sequencer step
 static void seq_step(void) {
-	if (!seq_flags.first_pulse)
+	if (!seq_flags.is_first_pulse)
 		last_step_ticks = ticks_since_step;
 	ticks_since_step = 0;
 
-	if (!seq_flags.playing && !seq_flags.force_next_step) {
+	if (!seq_flags.playing && !seq_flags.do_manual_step) {
 		c_step.play_step = false;
 		return;
 	}
-	seq_flags.force_next_step = false;
+	seq_flags.do_manual_step = false;
 
 	// perform a conditional step
 	c_step.euclid_len = param_index(P_SEQ_EUC_LEN);
@@ -141,8 +155,8 @@ static void seq_step(void) {
 	do_conditional_step(&c_step, false);
 
 	// the first pulse doesn't advance a step
-	if (!c_step.advance_step || seq_flags.first_pulse) {
-		seq_flags.first_pulse = false;
+	if (!c_step.advance_step || seq_flags.is_first_pulse) {
+		seq_flags.is_first_pulse = false;
 		return;
 	}
 
@@ -181,7 +195,7 @@ static void seq_step(void) {
 
 			// == this should just be able to be cur step? test! == //
 
-			jump_to_step(seq_flags.playing_backwards ? end_step : cur_seq_start);
+			set_step(seq_flags.playing_backwards ? end_step : cur_seq_start);
 			wrapped = true;
 		}
 		// otherwise => regular step
@@ -208,7 +222,7 @@ static void seq_step(void) {
 		// position of next least significant bit is the next step (relative)
 		step_val = step_mask ? __builtin_ctzll(step_mask) : 0;
 		// jump to and sound that step (absolute)
-		jump_to_step(cur_seq_start + step_val);
+		set_step(cur_seq_start + step_val);
 		// chosen step is no longer available
 		random_steps_avail &= ~((u64)1 << cur_seq_step);
 		break;
@@ -250,7 +264,7 @@ void seq_tick(void) {
 }
 
 static void rec_substep(PatternStringStep* string_step, u8 substep, u8 seq_pres, u8 seq_pos) {
-	if (substep < 8) {
+	if (substep < PTN_SUBSTEPS) {
 		string_step->pres[substep] = seq_pres;
 		if ((substep & 1) == 0 || string_step->pos[substep / 2] == 0)
 			string_step->pos[substep / 2] = seq_pos;
@@ -285,9 +299,9 @@ void seq_try_rec_touch(u8 string_id, s16 pressure, s16 position, bool pres_incre
 
 	PatternStringStep* string_step = string_step_ptr(string_id, false, cur_seq_step);
 	u8 mask = 1 << string_id;
-	u8 substep = seq_substep(8);
+	u8 substep = seq_substep(PTN_SUBSTEPS);
 
-	// step record mode
+	// step record mode => define which substep we're recording to
 	if (!seq_flags.playing) {
 		// new step => no string has recorded yet
 		if (cur_seq_step != last_seen_step) {
@@ -300,7 +314,7 @@ void seq_try_rec_touch(u8 string_id, s16 pressure, s16 position, bool pres_incre
 			last_seen_substep = substep;
 			for (u8 s_id = 0; s_id < NUM_STRINGS; s_id++)
 				if (string_recording & (1 << s_id)) {
-					if (record_to_substep[s_id] < 8)
+					if (record_to_substep[s_id] < PTN_SUBSTEPS)
 						record_to_substep[s_id]++;
 					else
 						record_to_substep[s_id] = 9 - (record_to_substep[s_id] & 1); // toggle between 8 and 9
@@ -364,9 +378,8 @@ void seq_try_get_touch(u8 string_id, s16* pressure, s16* position) {
 	if (!string_step->pres[substep])
 		return;
 	// exit if we're beyond the gate length
-	if (seq_substep(GATE_LEN_SUBSTEPS) > (param_val_poly(P_GATE_LENGTH, string_id) >> 8)) {
+	if (seq_substep(GATE_LEN_SUBSTEPS) > (param_val_poly(P_GATE_LENGTH, string_id) >> 8))
 		return;
-	}
 
 	// we're playing from the sequencer => create touch from pattern
 	*pressure = pres_decompress(string_step->pres[substep]);
@@ -378,7 +391,7 @@ void seq_try_get_touch(u8 string_id, s16* pressure, s16* position) {
 // equivalent to midi continue: start playing from current position
 void seq_continue(void) {
 	apply_cued_changes();
-	seq_flags.first_pulse = true;
+	seq_flags.is_first_pulse = true;
 	if (!seq_flags.playing) {
 		seq_flags.playing = true;
 		midi_send_transport(cur_seq_step == cur_seq_start ? MIDI_START : MIDI_CONTINUE);
@@ -387,34 +400,11 @@ void seq_continue(void) {
 
 // equivalent to midi start: reset and start playing from beginning
 void seq_play(void) {
-	seq_flags.playing_backwards = false;
 	random_steps_avail = 0;
 	c_step.euclid_trigs = 0;
 	seq_flags.playing_backwards = false;
-	jump_to_step(cur_seq_start);
+	set_step(cur_seq_start);
 	seq_continue();
-}
-
-// play sequencer in preview mode
-void seq_start_previewing(void) {
-	seq_flags.previewing = true;
-	seq_continue();
-}
-
-// turn off seq_flags.previewing, playing status remains unchanged
-void seq_end_previewing(void) {
-	seq_flags.previewing = false;
-}
-
-// toggle recording
-void seq_toggle_rec(void) {
-	seq_flags.recording = !seq_flags.recording;
-	visuals_substep = 0; // a mode change resets the step record visuals
-}
-
-// sequencer will stop playing at the end of the current step
-void seq_cue_to_stop(void) {
-	seq_flags.stop_at_next_step = true;
 }
 
 // stop sequencer immediately
@@ -432,26 +422,12 @@ void seq_stop(void) {
 // == SEQ STEP ACTIONS == //
 
 // only allowed when not playing
-void seq_force_play_step(void) {
-	seq_flags.force_next_step = true;
-	seq_flags.first_pulse = true;
+static void seq_trigger_manual_step(void) {
+	seq_flags.do_manual_step = true;
+	seq_flags.is_first_pulse = true;
 }
 
-// returns whether this wrapped
-bool seq_inc_step(void) {
-	u8 prev_step = cur_seq_step;
-	jump_to_step((cur_seq_step + 1) & 63);
-	return cur_seq_step <= prev_step;
-}
-
-// returns whether this wrapped
-bool seq_dec_step(void) {
-	u8 prev_step = cur_seq_step;
-	jump_to_step((cur_seq_step + 64 - 1) & 63);
-	return cur_seq_step >= prev_step;
-}
-
-void seq_try_set_start(u8 new_step) {
+void seq_cue_start_step(u8 new_step) {
 	// get the unmodulated new start step
 	u8 new_start = (new_step - param_index(P_STEP_OFFSET) + 64) & 63;
 	// 1. not playing => change immediately
@@ -467,7 +443,7 @@ void seq_try_set_start(u8 new_step) {
 		cued_ptn_start = new_start;
 }
 
-void seq_set_end(u8 new_step) {
+void seq_set_end_step(u8 new_step) {
 	u8 new_len = (new_step - cur_seq_start + 1 + 64) & 63;
 	if (new_len != cur_preset.seq_len) {
 		cur_preset.seq_len = new_len;
@@ -476,7 +452,34 @@ void seq_set_end(u8 new_step) {
 	align_cur_step();
 }
 
-void seq_clear_step(void) {
+// == UI == //
+
+void seq_press_left(bool from_default_ui) {
+	// while playing and in default UI => reset and play from start
+	if (seq_flags.playing) {
+		if (from_default_ui) {
+			seq_play();
+			cue_clock_reset();
+		}
+	}
+	// while not playing => step one step to the left
+	else {
+		seq_dec_step();
+		seq_trigger_manual_step();
+		cue_clock_reset();
+	}
+	ui_mode = UI_DEFAULT;
+}
+
+void seq_press_right(void) {
+	seq_inc_step();
+	seq_trigger_manual_step();
+	cue_clock_reset();
+}
+
+void seq_press_clear(void) {
+	if (seq_state() != SEQ_STEP_RECORDING)
+		return;
 	// clear pressures from all substeps, from all strings, for the current step
 	bool data_saved = false;
 	PatternStringStep* string_step = string_step_ptr(0, false, cur_seq_step);
@@ -490,6 +493,42 @@ void seq_clear_step(void) {
 	}
 	if (data_saved)
 		log_ram_edit(SEG_PAT0 + CUR_QUARTER);
+	seq_inc_step(); // move to next step after clearing
+}
+
+void seq_press_rec(void) {
+	// toggle recording
+	seq_flags.recording = !seq_flags.recording;
+	visuals_substep = 0; // a mode change resets the step record visuals
+}
+
+// play is the only pad with separate press/release behavior
+void seq_press_play(void) {
+	if (seq_flags.playing) {
+		// cue to stop it not cued already
+		if (!seq_flags.stop_at_next_step)
+			seq_flags.stop_at_next_step = true;
+		// already cued => stop immediately
+		else
+			seq_stop();
+	}
+	// not playing => initiate preview
+	else {
+		seq_flags.previewing = true;
+		seq_continue();
+		cue_clock_reset();
+	}
+}
+
+void seq_release_play(bool short_press) {
+	if (seq_flags.previewing) {
+		// a short press ends previewing and resumes playing normally
+		if (short_press)
+			seq_flags.previewing = false;
+		// a long press means this is the end of a preview and we should stop playing
+		else
+			seq_stop();
+	}
 }
 
 // == SEQ VISUALS == //
@@ -590,7 +629,7 @@ u8 seq_led(u8 x, u8 y, u8 sync_pulse) {
 
 u8 seq_press_led(u8 x, u8 y) {
 	PatternStringStep* string_step = string_step_ptr(x, true, cur_seq_step);
-	u8 substep = seq_substep(8);
+	u8 substep = seq_substep(PTN_SUBSTEPS);
 	if (string_step && string_step->pos[substep / 2] / 32 == y)
 		return string_step->pres[substep];
 	return 0;

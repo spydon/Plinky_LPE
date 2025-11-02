@@ -112,11 +112,11 @@ void handle_pad_actions(u8 strip_id, Touch* strip_cur) {
 			break;
 		case UI_PTN_START:
 			if (is_press_start)
-				seq_try_set_start(pad_y * 8 + strip_id);
+				seq_cue_start_step(pad_y * 8 + strip_id);
 			break;
 		case UI_PTN_END:
 			if (is_press_start)
-				seq_set_end(pad_y * 8 + strip_id);
+				seq_set_end_step(pad_y * 8 + strip_id);
 			break;
 		case UI_SETTINGS_MENU:
 			select_settings_item(strip_id, pad_y);

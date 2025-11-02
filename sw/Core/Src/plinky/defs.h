@@ -113,8 +113,8 @@ typedef struct SeqFlags {
 	bool previewing : 1;
 	bool playing_backwards : 1;
 	bool stop_at_next_step : 1;
-	bool first_pulse : 1;
-	bool force_next_step : 1;
+	bool is_first_pulse : 1;
+	bool do_manual_step : 1;
 	bool unused : 1;
 } SeqFlags;
 

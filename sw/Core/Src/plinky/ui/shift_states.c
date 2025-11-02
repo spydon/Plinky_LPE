@@ -103,17 +103,7 @@ void shift_set_state(ShiftState new_state) {
 			ui_mode = UI_DEFAULT;
 		break;
 	case SS_PLAY:
-		// cued to stop? => stop immediately
-		if (seq_flags.stop_at_next_step)
-			seq_stop();
-		// playing but not cued to stop? => cue to stop
-		else if (seq_playing())
-			seq_cue_to_stop();
-		// not playing? => initiate preview
-		else {
-			seq_start_previewing();
-			cue_clock_reset();
-		}
+		seq_press_play();
 		break;
 	default:
 		break;
@@ -177,54 +167,31 @@ void shift_release_state(void) {
 		clear_long_press();
 		break;
 	case SS_LEFT:
-		// short left press
 		if (!action_pressed_during_shift && short_press) {
-			// while playing and in default UI => reset and play from start
-			if (seq_playing()) {
-				if (prev_ui_mode == UI_DEFAULT) {
-					seq_play();
-					cue_clock_reset();
-				}
-			}
-			// while not playing => step one step to the left
-			else {
-				seq_dec_step();
-				seq_force_play_step();
-				cue_clock_reset();
-			}
+			seq_press_left(prev_ui_mode == UI_DEFAULT);
 			ui_mode = UI_DEFAULT;
 		}
 		if (action_pressed_during_shift || prev_ui_mode == ui_mode)
 			ui_mode = UI_DEFAULT;
 		break;
 	case SS_RIGHT:
-		// short right press => step one step to the right
 		if (!action_pressed_during_shift && short_press) {
-			seq_inc_step();
-			seq_force_play_step();
-			cue_clock_reset();
+			seq_press_right();
 			ui_mode = UI_DEFAULT;
 		}
 		if (action_pressed_during_shift || prev_ui_mode == ui_mode)
 			ui_mode = UI_DEFAULT;
 		break;
 	case SS_CLEAR:
-		// pressing clear in step-record mode clears sequencer step
-		if (ui_mode == UI_DEFAULT && seq_state() == SEQ_STEP_RECORDING) {
-			seq_clear_step();
-			// move to next step after clearing
-			seq_inc_step();
-		}
+		if (ui_mode == UI_DEFAULT)
+			seq_press_clear();
 		break;
 	case SS_RECORD:
 		if (short_press)
-			seq_toggle_rec();
+			seq_press_rec();
 		break;
 	case SS_PLAY:
-		// - a short press ends previewing and resumes playing normally
-		// - a long press means this is the end of a preview and we should stop playing
-		if (seq_flags.previewing)
-			short_press ? seq_end_previewing() : seq_stop();
+		seq_release_play(short_press);
 		break;
 	default:
 		break;

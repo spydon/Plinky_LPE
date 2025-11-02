@@ -8,7 +8,7 @@ extern SeqFlags seq_flags;
 bool seq_playing(void);
 bool seq_recording(void);
 SeqState seq_state(void);
-u32 seq_substep(u32 resolution); // ui & params_tick
+u32 seq_substep(u32 resolution); // viz
 
 // == MAIN SEQ FUNCTIONS == //
 
@@ -20,23 +20,22 @@ void seq_try_get_touch(u8 string_id, s16* pressure, s16* position);
 
 void seq_continue(void);
 void seq_play(void);
-void seq_start_previewing(void);
-void seq_end_previewing(void);
-void seq_toggle_rec(void);
-void seq_cue_to_stop(void);
 void seq_stop(void);
 
-// == SEQ STEP ACTIONS == //
+// == SEQ ACTIONS == //
 
-void seq_force_play_step(void);
 bool seq_inc_step(void);
-bool seq_dec_step(void);
-void seq_clear_step(void);
+void seq_cue_start_step(u8 new_step);
+void seq_set_end_step(u8 new_step);
 
-// == SEQ PATTERN ACTIONS == //
+// == UI == //
 
-void seq_try_set_start(u8 new_step);
-void seq_set_end(u8 new_step);
+void seq_press_left(bool from_default_ui);
+void seq_press_right(void);
+void seq_press_clear(void);
+void seq_press_rec(void);
+void seq_press_play(void);
+void seq_release_play(bool short_press);
 
 // == SEQ VISUALS == //
 
