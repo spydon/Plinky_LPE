@@ -2,8 +2,8 @@
 
 This is a user-maintained branch of firmware for the Plinky and Plinky+ synths. For the official firmware and information about the Plinky devices, visit the [official firmware repo](https://github.com/plinkysynth/plinky_public) and [official website](https://plinkysynth.com)
 
-## Current Release: v0.3.0 - *The one with the parameters*
-**Release date:** 10 October 2025
+## Current Release: v0.3.1 - *The one with the parameters*
+**Release date:** 5 November 2025
 
 **Important:**
 
@@ -11,7 +11,7 @@ This is a user-maintained branch of firmware for the Plinky and Plinky+ synths. 
 
 **Binary:**
 
-&rarr; [PlinkyLPE-0.3.0.uf2](../../raw/dev/builds/PlinkyLPE-0.3.0.uf2)
+&rarr; [PlinkyLPE-0.3.1.uf2](../../raw/dev/builds/PlinkyLPE-0.3.1.uf2)
 
 **How to install:**
 - Download the binary above
@@ -21,6 +21,12 @@ This is a user-maintained branch of firmware for the Plinky and Plinky+ synths. 
 *Please report any bugs as a [github issue](../../issues) or in the [#bug-reports](https://discord.com/channels/784856175937585152/844199535860383776) channel of the Plinky discord, so I can fix them*
 
 ---
+### Release v0.3.1
+#### Bugfixes
+- Corrects lfo rate mapping between OG and LPE firmware
+- Corrects delay time of unsynced delay
+- Restores CV A/B/X/Y input behavior
+- Removes audio/led glitches on reboot
 
 ### Release v0.3.0 highlights
 This release provides a much cleaner way of interacting with the Plinky by implementing lots of small cleanups in how parameters are handled and displayed. Overall the experience should have less friction and feel more intuitive. Here are some of the most important changes:
