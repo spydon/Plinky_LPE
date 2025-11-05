@@ -1,11 +1,20 @@
 # Release notes
 
+[v0.3.1](#v031)  
 [v0.3.0 - *The one with the parameters*](#v030---the-one-with-the-parameters)  
 [v0.2.1](#v021)  
 [v0.2.0 - *The one with the timing*](#v020---the-one-with-the-timing)  
 [About the refactor (LPE v0.0.0)](#about-the-refactor-lpe-v000)
 
 ---
+
+## v0.3.1
+*Released on 5 November 2025*
+### Bugfixes:
+- Corrects lfo rate mapping between OG and LPE firmware
+- Corrects delay time of unsynced delay
+- Restores CV A/B/X/Y input behavior
+- Removes audio/led glitches on reboot
 
 ## v0.3.0 - *The one with the parameters*
 *Released on 10 October 2025*
