@@ -47,27 +47,31 @@ static void gfx_dither_logo(u8 frame) {
 
 // == MESSAGE == //
 
-static const char* message = 0;
-static const char* submessage = 0;
+#define MESSAGE_TIME 700 // ms
+
+static char message[16] = {};
+static char submessage[16] = {};
 static u8 message_font;
 static u32 message_time = 0;
 
 void flash_message(Font fnt, const char* msg, const char* submsg) {
-	message = msg;
-	submessage = submsg;
+	strncpy(message, msg, sizeof(message) - 1);
+	message[sizeof(message) - 1] = 0;
+	strncpy(submessage, submsg, sizeof(submessage) - 1);
+	submessage[sizeof(submessage) - 1] = 0;
 	message_font = fnt;
-	message_time = millis() + 500;
+	message_time = millis() + MESSAGE_TIME;
 }
 
 // returns whether this drew anything
 static bool draw_message(void) {
-	if (!message)
+	if (!message[0])
 		return false;
 	if (millis() > message_time) {
-		message = 0;
+		message[0] = 0;
 		return false;
 	}
-	if (submessage) {
+	if (submessage[0]) {
 		draw_str(0, 0, F_12, submessage);
 		draw_str(0, 12, message_font, message);
 		return true;
