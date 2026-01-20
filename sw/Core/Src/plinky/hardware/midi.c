@@ -224,8 +224,8 @@ static bool send_midi_msg(u8 status, u8 data1, u8 data2) {
 #endif
 
 	// send to usb
-	tud_midi_packet_write(buf);
-	return true;
+	// (we assume this can only ever return false when trs out is disabled, as serial is so much slower than usb midi)
+	return tud_midi_packet_write(buf);
 }
 
 static bool send_double_midi_msg(u8 status1, u8 data1_1, u8 data1_2, u8 status2, u8 data2_1, u8 data2_2) {
