@@ -406,8 +406,8 @@ void cv_calib(void) {
 
 	// wait for them to plug the other end in
 	oled_clear();
-	draw_str(0, 4, F_12_BOLD, "Checking for pitch");
-	draw_str(0, 16, F_12_BOLD, "loopback cable");
+	draw_str(0, 4, F_12, "Checking for pitch");
+	draw_str(0, 16, F_12, "loopback cable");
 	oled_flip();
 	HAL_Delay(1500);
 
@@ -426,8 +426,8 @@ void cv_calib(void) {
 
 	// start pitch in auto-calib
 	oled_clear();
-	draw_str(0, 4, F_12_BOLD, "Auto-calibrating");
-	draw_str(0, 16, F_12_BOLD, "pitch cv input...");
+	draw_str(0, 4, F_12, "Auto-calibrating");
+	draw_str(0, 16, F_12, "pitch cv input...");
 	oled_flip();
 	HAL_Delay(1000); // give the user some time to fully plug in the jack
 
@@ -455,8 +455,8 @@ void cv_calib(void) {
 
 	// done
 	oled_clear();
-	draw_str(0, 4, F_12_BOLD, "Calibration complete!");
-	draw_str(0, 16, F_12_BOLD, "Unplug pitch cable");
+	draw_str(0, 4, F_12, "Calibration complete!");
+	draw_str(0, 16, F_12, "Unplug pitch cable");
 	oled_flip();
 
 	// wait for unplug

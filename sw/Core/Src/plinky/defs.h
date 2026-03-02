@@ -585,21 +585,11 @@ const static PolyParam poly_param_from_param[NUM_PARAMS] = {
 // == GRAPHICS == //
 
 typedef enum Font {
-	BOLD = 16,
 	F_8 = 0,
 	F_12,
 	F_16,
-	F_20,
-	F_24,
-	F_28,
-	F_32,
-	F_8_BOLD = BOLD,
-	F_12_BOLD,
 	F_16_BOLD,
 	F_20_BOLD,
-	F_24_BOLD,
-	F_28_BOLD,
-	F_32_BOLD,
 	NUM_FONTS,
 } Font;
 

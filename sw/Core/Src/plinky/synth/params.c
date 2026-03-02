@@ -1241,9 +1241,9 @@ void draw_cur_param(void) {
 	u8 text_x = 19;
 	u8 text_right_x = OLED_WIDTH - 17;
 	// draw section icon
-	draw_str(0, sect_str[0] == I_NOTES[0] ? 1 : 0, F_12_BOLD, (char[]){sect_str[0], '\0'});
+	draw_str(0, sect_str[0] == I_NOTES[0] ? 1 : 0, F_12, (char[]){sect_str[0], '\0'});
 	// draw section name
-	draw_str(text_x, 3, F_12_BOLD, sect_str + 1);
+	draw_str(text_x, 3, F_12, sect_str + 1);
 
 	// modulated value
 	if (draw_src != SRC_BASE || has_modulation(draw_param)) {
@@ -1262,7 +1262,7 @@ void draw_cur_param(void) {
 			break;
 		default:
 			const char* mod_val_str = get_param_str(draw_param, SRC_BASE, raw_mod, val_buf);
-			font = F_12_BOLD;
+			font = F_12;
 			width = str_width(font, mod_val_str);
 			x = text_right_x - width;
 			draw_str(x, 21, font, mod_val_str);
@@ -1278,15 +1278,15 @@ void draw_cur_param(void) {
 	if (draw_src == SRC_BASE) {
 		switch (draw_param) {
 		case P_SCALE:
-			font = F_12_BOLD;
+			font = F_12;
 			x_center = 82;
 			break;
 		case P_ARP_ORDER:
-			font = F_12_BOLD;
+			font = F_12;
 			x_center = 81;
 			break;
 		case P_SEQ_ORDER:
-			font = F_12_BOLD;
+			font = F_12;
 			x_center = 80;
 			break;
 		default:
@@ -1299,7 +1299,7 @@ void draw_cur_param(void) {
 				font = F_16_BOLD;
 			break;
 		case R_LFOSHP:
-			font = F_12_BOLD;
+			font = F_12;
 			x_center = 85;
 			break;
 		default:
@@ -1319,7 +1319,7 @@ void draw_cur_param(void) {
 	// draw first line
 	width = str_width(font, val_buf);
 	x = x_center == 0 ? text_right_x - width : x_center - width / 2;
-	if (x < text_x + str_width(F_12_BOLD, sect_str + 1)) {
+	if (x < text_x + str_width(F_12, sect_str + 1)) {
 		font--;
 		width = str_width(font, val_buf);
 		x = x_center == 0 ? text_right_x - width : x_center - width / 2;
@@ -1413,7 +1413,7 @@ void draw_cur_param(void) {
 	}
 
 	// draw icon
-	draw_str(0, icon_y, F_12_BOLD, icon_str);
+	draw_str(0, icon_y, F_12, icon_str);
 
 	// name default
 	if (text_y == 0) {
@@ -1444,7 +1444,7 @@ void draw_cur_param(void) {
 	}
 
 	// draw name
-	draw_str(text_x, text_y, F_12_BOLD, name_str);
+	draw_str(text_x, text_y, F_12, name_str);
 }
 
 void draw_arp_flag(void) {
