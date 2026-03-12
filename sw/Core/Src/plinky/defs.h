@@ -244,7 +244,6 @@ typedef enum SysParam {
 	SYS_MIDI_OUT_VEL_BALANCE,
 	SYS_MIDI_IN_PRES_TYPE,
 	SYS_MIDI_OUT_PRES_TYPE,
-	SYS_MIDI_OUT_YZ_CONTROL,
 	SYS_MIDI_SOFT_THRU,
 	SYS_MIDI_CHANNEL_BEND_RANGE_IN,
 	SYS_MIDI_STRING_BEND_RANGE_IN,
@@ -256,7 +255,8 @@ typedef enum SysParam {
 	SYS_MPE_CHANS,
 	SYS_MIDI_IN_SCALE_QUANT,
 	SYS_MIDI_IN_FILTER,
-	SYS_MIDI_OUT_FILTER,
+	SYS_MIDI_OUT_FILTER_1,
+	SYS_MIDI_OUT_FILTER_2,
 	SYS_MIDI_TRS_OUT_OFF,
 	SYS_MIDI_TUNING,
 	SYS_REFERENCE_PITCH,
@@ -891,7 +891,8 @@ typedef struct SysParams {
 	bool midi_in_scale_quant : 1;
 	bool midi_trs_out_off : 1;
 	bool midi_tuning : 1;
-	u8 pad1 : 3;
+	bool mpe_out_fine_tuning : 1;
+	u8 pad1 : 2;
 	// 13 bytes
 	u8 cv_gate_in_is_pressure : 1;
 	u8 reference_pitch : 4;
