@@ -100,7 +100,7 @@ static void press_function(FunctionPad new_function) {
 	case FN_CLEAR:
 		if (ui_mode == UI_LOAD)
 			cancel_main_press();
-		else {
+		else if (ui_mode != UI_SETTINGS_MENU) {
 			// pressing clear stops latched notes playing
 			clear_latch();
 			keep_ui_open = ui_mode == UI_LOAD;
@@ -185,6 +185,8 @@ static void release_function(void) {
 	case FN_CLEAR:
 		if (ui_mode == UI_LOAD)
 			cancel_main_press();
+		else if (ui_mode == UI_SETTINGS_MENU)
+			keep_ui_open = false;
 		else
 			seq_press_clear();
 		break;
@@ -458,7 +460,7 @@ bool oled_function_visuals(void) {
 			}
 			break;
 		case FN_CLEAR:
-			if (ui_mode == UI_LOAD)
+			if (ui_mode == UI_LOAD || ui_mode == UI_SETTINGS_MENU)
 				return false;
 
 			draw_str_ctr(6, F_20_BOLD, "clear");
