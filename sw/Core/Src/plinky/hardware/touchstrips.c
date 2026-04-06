@@ -10,8 +10,8 @@ extern TSC_HandleTypeDef htsc;
 
 #define TOUCH_THRESHOLD 1000
 
-u8 touch_frame = 0; // frame counter for touch reading loop
-u16 strip_touched = 0;
+static u8 touch_frame = 0; // frame counter for touch reading loop
+static u16 strip_touched = 0;
 
 static TouchCalibData touch_calib_data[NUM_TOUCH_READINGS];
 static Touch touches[NUM_TOUCHSTRIPS][NUM_TOUCH_FRAMES]; // the touches
@@ -21,6 +21,14 @@ static u16 sensor_max[2 * NUM_TOUCH_READINGS];           // lifetime high
 
 static bool tsc_started = false;
 static u16 read_this_frame = 0; // has touch been read this touch_frame? bitmask
+
+u8 get_touch_frame(void) {
+	return touch_frame;
+}
+
+u16 get_strip_touched(void) {
+	return strip_touched;
+}
 
 // sensor macros
 
