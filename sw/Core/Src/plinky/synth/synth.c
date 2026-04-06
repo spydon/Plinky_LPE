@@ -91,10 +91,6 @@ static s8 string_degree_steps[NUM_STRINGS] = {};
 static Scale string_scale[NUM_STRINGS] = {};
 static u16 string_root_pitch[NUM_STRINGS] = {};
 
-// Midi Tuning Standard
-static u16 midi_tuning_pitch[NUM_NOTES] = {};
-static u32 midi_tuning_active[(NUM_NOTES + 31) / 32] = {};
-
 const SynthString* get_synth_string(u8 string_id) {
 	return &synth_string[string_id];
 }
@@ -104,15 +100,16 @@ const SynthString* get_synth_string(u8 string_id) {
 // only valid if NUM_NOTES == 97 (8 octaves + 1 step)
 #define MAX_VALID_SCALE_STEP(scale) (steps_in_scale[scale] << 3)
 
-#define MIDI_TUNING_IS_ACTIVE(note_nr) (midi_tuning_active[(note_nr) >> 5] & (1u << ((note_nr) & 31)))
-#define MIDI_TUNING_SET_ACTIVE(note_nr) (midi_tuning_active[(note_nr) >> 5] |= (1u << ((note_nr) & 31)))
+#define MIDI_TUNING_IS_ACTIVE(note_nr) (global_data.midi_tuning_active[(note_nr) >> 5] & (1u << ((note_nr) & 31)))
+#define MIDI_TUNING_SET_ACTIVE(note_nr) (global_data.midi_tuning_active[(note_nr) >> 5] |= (1u << ((note_nr) & 31)))
 #define USING_MIDI_TUNING(note_number) (sys_params.midi_tuning && MIDI_TUNING_IS_ACTIVE(note_number))
 
 static u16 pitch_at_step_with_midi_tuning(u8 step, Scale scale, u8 steps_in_scale) {
 	u8 octs = step / steps_in_scale;
 	u16 pitch_in_oct = scale_table[scale][step % steps_in_scale];
 	u8 note_number = 12 * octs + PITCH_TO_NOTE_NR(pitch_in_oct);
-	return USING_MIDI_TUNING(note_number) ? midi_tuning_pitch[note_number] : OCTS_TO_PITCH(octs) + pitch_in_oct;
+	return USING_MIDI_TUNING(note_number) ? global_data.midi_tuning_pitch[note_number]
+	                                      : OCTS_TO_PITCH(octs) + pitch_in_oct;
 }
 
 static u16 pitch_at_step(u8 step, Scale scale, u8 steps_in_scale) {
@@ -268,7 +265,8 @@ void clear_synth_strings(void) {
 void set_note_tuning(u8 note_number, u16 pitch) {
 	if (note_number < NUM_NOTES) {
 		MIDI_TUNING_SET_ACTIVE(note_number);
-		midi_tuning_pitch[note_number] = pitch;
+		global_data.midi_tuning_pitch[note_number] = pitch;
+		log_ram_edit(SEG_GLOBAL_DATA);
 	}
 }
 
@@ -991,8 +989,8 @@ static void run_voice(u8 voice_id, u32* dst) {
 
 		if (ext_touch) {
 			u8 note_number = s_string->note_number;
-			note_pitch =
-			    USING_MIDI_TUNING(note_number) ? midi_tuning_pitch[note_number] : NOTE_NR_TO_PITCH(note_number);
+			note_pitch = USING_MIDI_TUNING(note_number) ? global_data.midi_tuning_pitch[note_number]
+			                                            : NOTE_NR_TO_PITCH(note_number);
 		}
 		else {
 			root_pitch = string_root_pitch[voice_id];
