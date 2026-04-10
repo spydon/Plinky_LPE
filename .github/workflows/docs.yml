@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   deploy:
@@ -27,5 +27,13 @@ jobs:
           mkdir -p docs/imgs
           cp -r imgs/. docs/imgs/
 
-      - name: Deploy to GitHub Pages
-        run: mkdocs gh-deploy --force
+      - name: Build docs
+        run: mkdocs build
+
+      - name: Deploy to ember-labs-io.github.io
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.PAGES_DEPLOY_TOKEN }}
+          external_repository: ember-labs-io/ember-labs-io.github.io
+          publish_branch: main
+          publish_dir: ./site
