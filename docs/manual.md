@@ -50,8 +50,8 @@ rightmost 8 pads select/deselect a sample.
 
 ### Navigation Buttons
 
-| Button              | Action                                                                                                                                                              |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Button               | Action                                                                                                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ![prev] **Previous** | Tap: move back a step (or reset if playing). Hold: show current loop; tap a pad to jump or set a new loop start                                                     |
 | ![next] **Next**     | Tap: move forward a step. Hold: show current loop; tap a pad to set loop end                                                                                        |
 | ![cross] **Clear**   | Cancel latched chord · suppress notes from a playing sequence · wipe preset/pattern (preset mode) · clear note data (record mode) · enter a rest (step record mode) |
@@ -67,30 +67,30 @@ Parameters are grouped in rows, bottom to top. Each pad has two functions — **
 
 ### Sampler Row
 
-| Param 1                                                    | Param 2                                                    |
-| ---------------------------------------------------------- | ---------------------------------------------------------- |
+| Param 1                                                     | Param 2                                                     |
+| ----------------------------------------------------------- | ----------------------------------------------------------- |
 | ![load] Sample Choice — active sample, 0 for none           | ![random] Noise Level — white noise mixed with oscillator   |
 | ![offset] Scrub — grain position offset within sample       | ![play] Scrub Jitter — randomises scrub position per grain  |
 | ![period] Rate — playback rate (negative = reverse)         | ![times] Rate Jitter — randomises rate per grain            |
 | ![amplitude] Grain Size — metallic (tiny) to smooth (large) | ![warp] Grain Size Jitter — randomises grain size per grain |
-| ![time] Timestretch — changes rate without changing pitch   | *(unused)*                                                 |
+| ![time] Timestretch — changes rate without changing pitch   | *(unused)*                                                  |
 | ![phones] Headphone Volume                                  | ![micro] Quantise Mode — pitch CV quantisation              |
 
 ### Arp / Sequencer Row
 
-| Parameter             | Arp                        | Sequencer               |
-| --------------------- | -------------------------- | ----------------------- |
-| ![order] Order         | Note order in arpeggio     | Note order in sequencer |
-| ![divide] Divide       | Clock divider              | Clock divider           |
-| ![percent] Probability | Chance of note triggering  | Same                    |
-| ![length] Euclid       | Steps in euclidean rhythm  | Same                    |
-| Octave / Pattern      | ![octave] Arp octave spread | ![notes] Current pattern |
-| Tempo / Step          | ![tempo] Tap tempo / BPM    | ![seq] Current step      |
+| Parameter              | Arp                         | Sequencer                |
+| ---------------------- | --------------------------- | ------------------------ |
+| ![order] Order         | Note order in arpeggio      | Note order in sequencer  |
+| ![divide] Divide       | Clock divider               | Clock divider            |
+| ![percent] Probability | Chance of note triggering   | Same                     |
+| ![length] Euclid       | Steps in euclidean rhythm   | Same                     |
+| Octave / Pattern       | ![octave] Arp octave spread | ![notes] Current pattern |
+| Tempo / Step           | ![tempo] Tap tempo / BPM    | ![seq] Current step      |
 
 ### VCA / Mixer Row
 
-| Param 1                                                  | Param 2                                          |
-| -------------------------------------------------------- | ------------------------------------------------ |
+| Param 1                                                   | Param 2                                           |
+| --------------------------------------------------------- | ------------------------------------------------- |
 | ![touch] Sensitivity — pressure to open the low-pass gate | ![jack] Input Level — audio input level           |
 | ![distort] Drive — output drive before FX                 | ![sliders] Synth Level — dry synth audio level    |
 | ![adsr_a] Attack                                          | ![send] In → FX Level — wet level for input audio |
@@ -100,8 +100,8 @@ Parameters are grouped in rows, bottom to top. Each pad has two functions — **
 
 ### Pitch Row
 
-| Param 1                                                  | Param 2                                                             |
-| -------------------------------------------------------- | ------------------------------------------------------------------- |
+| Param 1                                                   | Param 2                                                              |
+| --------------------------------------------------------- | -------------------------------------------------------------------- |
 | ![octave] Octave — base octave                            | ![piano] Rotate — shift notes within current scale                   |
 | ![fm] Pitch — base pitch (unquantized)                    | ![micro] Scale — scale for pads & rotate                             |
 | ![glide] Glide — glide time, independent per string       | ![micro] Microtone — 0 = quantized, 100 = analog                     |
@@ -111,21 +111,21 @@ Parameters are grouped in rows, bottom to top. Each pad has two functions — **
 
 ### FX Row
 
-| Param 1                                     | Param 2                                       |
-| ------------------------------------------- | --------------------------------------------- |
+| Param 1                                      | Param 2                                        |
+| -------------------------------------------- | ---------------------------------------------- |
 | ![delay] Delay Send                          | ![reverb] Reverb Send                          |
 | ![time] Delay Time — negative = beat-synced  | ![time] Reverb Time                            |
 | ![times] Second Tap — ping-pong stereo ratio | ![percent] Shimmer                             |
 | ![warp] Delay Wobble                         | ![warp] Reverb Wobble                          |
-| ![feedback] Feedback                         | *(unused)*                                    |
+| ![feedback] Feedback                         | *(unused)*                                     |
 | ![amplitude] Env2 Level                      | ![period] Env2 Repeat — 100% = repeats forever |
 
 ### CV / LFO Rows
 
 Each of the 4 CV inputs is scaled, offset, then combined with a dedicated LFO.
 
-| Parameter         | A / B                       | X / Y |
-| ----------------- | --------------------------- | ----- |
+| Parameter          | A / B                       | X / Y |
+| ------------------ | --------------------------- | ----- |
 | ![ab] Scale        | Attenuverter for CV         | Same  |
 | ![offset] Offset   | Shift for CV (A/B add knob) | Same  |
 | ![amplitude] Depth | LFO depth                   | Same  |
@@ -148,8 +148,8 @@ ______________________________________________________________________
 Every parameter can be modulated from a matrix of 7 sources.
 While in parameter mode (Shift 1/2 held), select a modulation source from the **rightmost column**:
 
-| Source            | Description                                                              |
-| ----------------- | ------------------------------------------------------------------------ |
+| Source             | Description                                                              |
+| ------------------ | ------------------------------------------------------------------------ |
 | ![tilt] Base Value | Parameter value before modulation                                        |
 | ![random] Random   | Variation added on each trigger. Positive = unipolar, negative = bipolar |
 | ![touch] Pressure  | Finger pressure → parameter                                              |
@@ -195,8 +195,8 @@ ______________________________________________________________________
 
 ### Inputs (top to bottom)
 
-| Jack             | Function                                           |
-| ---------------- | -------------------------------------------------- |
+| Jack              | Function                                           |
+| ----------------- | -------------------------------------------------- |
 | ![ab] A, B, X, Y  | Modulation inputs combined with dedicated LFOs     |
 | ![piano] Pitch    | 1 V/Oct pitch offset (approx −1 V to +5 V)         |
 | ![env] Gate       | Modulates the low-pass gates (0–5 V)               |
@@ -205,8 +205,8 @@ ______________________________________________________________________
 
 ### Outputs (top to bottom)
 
-| Jack             | Function                                                 |
-| ---------------- | -------------------------------------------------------- |
+| Jack              | Function                                                 |
+| ----------------- | -------------------------------------------------------- |
 | ![tempo] Clock    | 1/16th note clock out                                    |
 | ![play] Trigger   | +6 V pulse on every new note                             |
 | ![right] Pitch Hi | 1 V/oct — rightmost string playing (respects Arp)        |
