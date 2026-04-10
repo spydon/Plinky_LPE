@@ -1,0 +1,1462 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://ember-labs-io.github.io/Plinky_LPE/manual/">
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../build-guide/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Manual - Plinky LPE Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#manual" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Plinky LPE Docs" class="md-header__button md-logo" aria-label="Plinky LPE Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Plinky LPE Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Manual
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/ember-labs-io/Plinky_LPE" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ember-labs-io/Plinky_LPE
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Plinky LPE Docs" class="md-nav__button md-logo" aria-label="Plinky LPE Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Plinky LPE Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/ember-labs-io/Plinky_LPE" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ember-labs-io/Plinky_LPE
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manual
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manual
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#playing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Playing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Playing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters-1-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters 1 / 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#preset-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Preset Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#navigation-buttons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Navigation Buttons
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sampler-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sampler Row
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arp-sequencer-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arp / Sequencer Row
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vca-mixer-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VCA / Mixer Row
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pitch-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pitch Row
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fx-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FX Row
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cv-lfo-rows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CV / LFO Rows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#toggle-preview-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Toggle / Preview Row
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modulation-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modulation Sources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sample-edit-recording-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sample Edit / Recording Mode
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sample Edit / Recording Mode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recording" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recording
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sample-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sample Modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cv-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CV Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CV Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inputs-top-to-bottom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inputs (top to bottom)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#outputs-top-to-bottom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outputs (top to bottom)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../midi-cc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MIDI CC Map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#playing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Playing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Playing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters-1-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters 1 / 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#preset-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Preset Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#navigation-buttons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Navigation Buttons
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sampler-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sampler Row
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arp-sequencer-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arp / Sequencer Row
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vca-mixer-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VCA / Mixer Row
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pitch-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pitch Row
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fx-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FX Row
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cv-lfo-rows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CV / LFO Rows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#toggle-preview-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Toggle / Preview Row
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modulation-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modulation Sources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sample-edit-recording-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sample Edit / Recording Mode
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sample Edit / Recording Mode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recording" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recording
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sample-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sample Modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cv-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CV Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CV Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inputs-top-to-bottom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inputs (top to bottom)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#outputs-top-to-bottom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outputs (top to bottom)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="manual">Manual</h1>
+<h2 id="introduction">Introduction</h2>
+<p>Plinky is an 8-voice polyphonic touch synthesiser that specialises in fragile, melancholic sounds.
+It supports 4 external CV modulation sources — A, B, X, Y — each with its own LFO on top.
+A &amp; B also have dedicated offset knobs.</p>
+<p>Think of Plinky as 8 vertical monophonic strings, played by touching the 64 main pads.
+By default each string quantizes to steps of a C major scale, and the strings are a 5th apart.</p>
+<p><strong>Each string has:</strong></p>
+<ul>
+<li><em>Either</em> 4 sawtooth oscillators, detuned by the tiny movements of your finger</li>
+<li><em>Or</em> 4 sample grains drawn from 1 of 8 samples you can record into Plinky</li>
+<li>A white noise oscillator</li>
+<li>An ADSR envelope controlling a resonant 2-pole low-pass gate</li>
+<li>A secondary Attack-Decay envelope with repeat</li>
+</ul>
+<p>Plinky also has global delay, reverb, high-pass filter and saturation units, along with a simple
+mixer, arpeggiator, and sequencer.</p>
+<hr />
+<h2 id="playing">Playing</h2>
+<p>Touch the 64 main pads to play. Parameters and presets are accessed using the row of 8 <strong>shift keys</strong>
+(blue LEDs) along the bottom, used in conjunction with the main pads.</p>
+<h3 id="parameters-1-2">Parameters 1 / 2</h3>
+<p>The most important buttons. Tap to enter <strong>parameter mode</strong> (LED on), then tap a main pad to choose
+a parameter to edit. Edit with the leftmost column (acts as a slider) or by sliding up/down on the
+icon pad itself.</p>
+<blockquote>
+<p><strong>Tip:</strong> Hold the shift key with one hand and edit with the other.</p>
+</blockquote>
+<p>Tap again to enter <strong>slider mode</strong> (LED flashing): leftmost column stays a slider, rest of pads are
+playable notes. Tap once more to return to <strong>play mode</strong> (LED off).</p>
+<h3 id="preset-mode">Preset Mode</h3>
+<p>LED on. The left 32 pads become preset selectors, the middle 24 pads are pattern selectors, and the
+rightmost 8 pads select/deselect a sample.</p>
+<ul>
+<li>If the sequencer is playing, changes take effect on the next loop</li>
+<li><strong>Press and hold</strong> a preset/pattern pad to copy the current preset/pattern onto it</li>
+<li><strong>Press and hold</strong> a sample pad to enter sample edit/record mode</li>
+<li><strong>Hold X shift</strong> to initialise a preset or clear a pattern</li>
+</ul>
+<h3 id="navigation-buttons">Navigation Buttons</h3>
+<table>
+<thead>
+<tr>
+<th>Button</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="prev" src="../icons/prev.png" title="prev" /> <strong>Previous</strong></td>
+<td>Tap: move back a step (or reset if playing). Hold: show current loop; tap a pad to jump or set a new loop start</td>
+</tr>
+<tr>
+<td><img alt="next" src="../icons/next.png" title="next" /> <strong>Next</strong></td>
+<td>Tap: move forward a step. Hold: show current loop; tap a pad to set loop end</td>
+</tr>
+<tr>
+<td><img alt="cross" src="../icons/cross.png" title="cross" /> <strong>Clear</strong></td>
+<td>Cancel latched chord · suppress notes from a playing sequence · wipe preset/pattern (preset mode) · clear note data (record mode) · enter a rest (step record mode)</td>
+</tr>
+<tr>
+<td><img alt="record" src="../icons/record.png" title="record" /> <strong>Record</strong></td>
+<td>Toggle record mode. Realtime when playing, step-sequencing when paused</td>
+</tr>
+<tr>
+<td><img alt="play" src="../icons/play.png" title="play" /> <strong>Play</strong></td>
+<td>Toggle time playing</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="parameters">Parameters</h2>
+<p>Parameters are grouped in rows, bottom to top. Each pad has two functions — <strong>Param 1</strong> (primary) and
+<strong>Param 2</strong> (secondary).</p>
+<h3 id="sampler-row">Sampler Row</h3>
+<table>
+<thead>
+<tr>
+<th>Param 1</th>
+<th>Param 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="load" src="../icons/load.png" title="load" /> Sample Choice — active sample, 0 for none</td>
+<td><img alt="random" src="../icons/random.png" title="random" /> Noise Level — white noise mixed with oscillator</td>
+</tr>
+<tr>
+<td><img alt="offset" src="../icons/offset.png" title="offset" /> Scrub — grain position offset within sample</td>
+<td><img alt="play" src="../icons/play.png" title="play" /> Scrub Jitter — randomises scrub position per grain</td>
+</tr>
+<tr>
+<td><img alt="period" src="../icons/period.png" title="period" /> Rate — playback rate (negative = reverse)</td>
+<td><img alt="times" src="../icons/times.png" title="times" /> Rate Jitter — randomises rate per grain</td>
+</tr>
+<tr>
+<td><img alt="amplitude" src="../icons/amplitude.png" title="amplitude" /> Grain Size — metallic (tiny) to smooth (large)</td>
+<td><img alt="warp" src="../icons/warp.png" title="warp" /> Grain Size Jitter — randomises grain size per grain</td>
+</tr>
+<tr>
+<td><img alt="time" src="../icons/time.png" title="time" /> Timestretch — changes rate without changing pitch</td>
+<td><em>(unused)</em></td>
+</tr>
+<tr>
+<td><img alt="phones" src="../icons/phones.png" title="phones" /> Headphone Volume</td>
+<td><img alt="micro" src="../icons/micro.png" title="micro" /> Quantise Mode — pitch CV quantisation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="arp-sequencer-row">Arp / Sequencer Row</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Arp</th>
+<th>Sequencer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="order" src="../icons/order.png" title="order" /> Order</td>
+<td>Note order in arpeggio</td>
+<td>Note order in sequencer</td>
+</tr>
+<tr>
+<td><img alt="divide" src="../icons/divide.png" title="divide" /> Divide</td>
+<td>Clock divider</td>
+<td>Clock divider</td>
+</tr>
+<tr>
+<td><img alt="percent" src="../icons/percent.png" title="percent" /> Probability</td>
+<td>Chance of note triggering</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><img alt="length" src="../icons/length.png" title="length" /> Euclid</td>
+<td>Steps in euclidean rhythm</td>
+<td>Same</td>
+</tr>
+<tr>
+<td>Octave / Pattern</td>
+<td><img alt="octave" src="../icons/octave.png" title="octave" /> Arp octave spread</td>
+<td><img alt="notes" src="../icons/notes.png" title="notes" /> Current pattern</td>
+</tr>
+<tr>
+<td>Tempo / Step</td>
+<td><img alt="tempo" src="../icons/tempo.png" title="tempo" /> Tap tempo / BPM</td>
+<td><img alt="seq" src="../icons/seq.png" title="seq" /> Current step</td>
+</tr>
+</tbody>
+</table>
+<h3 id="vca-mixer-row">VCA / Mixer Row</h3>
+<table>
+<thead>
+<tr>
+<th>Param 1</th>
+<th>Param 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="touch" src="../icons/touch.png" title="touch" /> Sensitivity — pressure to open the low-pass gate</td>
+<td><img alt="jack" src="../icons/jack.png" title="jack" /> Input Level — audio input level</td>
+</tr>
+<tr>
+<td><img alt="distort" src="../icons/distort.png" title="distort" /> Drive — output drive before FX</td>
+<td><img alt="sliders" src="../icons/sliders.png" title="sliders" /> Synth Level — dry synth audio level</td>
+</tr>
+<tr>
+<td><img alt="adsr_a" src="../icons/adsr_a.png" title="adsr_a" /> Attack</td>
+<td><img alt="send" src="../icons/send.png" title="send" /> In → FX Level — wet level for input audio</td>
+</tr>
+<tr>
+<td><img alt="adsr_d" src="../icons/adsr_d.png" title="adsr_d" /> Decay</td>
+<td><img alt="percent" src="../icons/percent.png" title="percent" /> Wet — wet/dry level for FX</td>
+</tr>
+<tr>
+<td><img alt="adsr_s" src="../icons/adsr_s.png" title="adsr_s" /> Sustain</td>
+<td><img alt="hpf" src="../icons/hpf.png" title="hpf" /> High Pass Cutoff</td>
+</tr>
+<tr>
+<td><img alt="adsr_r" src="../icons/adsr_r.png" title="adsr_r" /> Release</td>
+<td><img alt="color" src="../icons/color.png" title="color" /> Resonance</td>
+</tr>
+</tbody>
+</table>
+<h3 id="pitch-row">Pitch Row</h3>
+<table>
+<thead>
+<tr>
+<th>Param 1</th>
+<th>Param 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="octave" src="../icons/octave.png" title="octave" /> Octave — base octave</td>
+<td><img alt="piano" src="../icons/piano.png" title="piano" /> Rotate — shift notes within current scale</td>
+</tr>
+<tr>
+<td><img alt="fm" src="../icons/fm.png" title="fm" /> Pitch — base pitch (unquantized)</td>
+<td><img alt="micro" src="../icons/micro.png" title="micro" /> Scale — scale for pads &amp; rotate</td>
+</tr>
+<tr>
+<td><img alt="glide" src="../icons/glide.png" title="glide" /> Glide — glide time, independent per string</td>
+<td><img alt="micro" src="../icons/micro.png" title="micro" /> Microtone — 0 = quantized, 100 = analog</td>
+</tr>
+<tr>
+<td><img alt="interval" src="../icons/interval.png" title="interval" /> Interval — fixed interval between oscillators</td>
+<td><img alt="interval" src="../icons/interval.png" title="interval" /> Stride — interval between successive strings</td>
+</tr>
+<tr>
+<td><img alt="length" src="../icons/length.png" title="length" /> Gate Length — staccato control for Arp &amp; Seq</td>
+<td><img alt="wave" src="../icons/wave.png" title="wave" /> PWM — pulse width (0 = 4 sawtooths)</td>
+</tr>
+<tr>
+<td><img alt="period" src="../icons/period.png" title="period" /> Env2 Rate</td>
+<td><img alt="warp" src="../icons/warp.png" title="warp" /> Env2 Warp — ramp down (−100) / triangle (0) / ramp up (+100)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="fx-row">FX Row</h3>
+<table>
+<thead>
+<tr>
+<th>Param 1</th>
+<th>Param 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="delay" src="../icons/delay.png" title="delay" /> Delay Send</td>
+<td><img alt="reverb" src="../icons/reverb.png" title="reverb" /> Reverb Send</td>
+</tr>
+<tr>
+<td><img alt="time" src="../icons/time.png" title="time" /> Delay Time — negative = beat-synced</td>
+<td><img alt="time" src="../icons/time.png" title="time" /> Reverb Time</td>
+</tr>
+<tr>
+<td><img alt="times" src="../icons/times.png" title="times" /> Second Tap — ping-pong stereo ratio</td>
+<td><img alt="percent" src="../icons/percent.png" title="percent" /> Shimmer</td>
+</tr>
+<tr>
+<td><img alt="warp" src="../icons/warp.png" title="warp" /> Delay Wobble</td>
+<td><img alt="warp" src="../icons/warp.png" title="warp" /> Reverb Wobble</td>
+</tr>
+<tr>
+<td><img alt="feedback" src="../icons/feedback.png" title="feedback" /> Feedback</td>
+<td><em>(unused)</em></td>
+</tr>
+<tr>
+<td><img alt="amplitude" src="../icons/amplitude.png" title="amplitude" /> Env2 Level</td>
+<td><img alt="period" src="../icons/period.png" title="period" /> Env2 Repeat — 100% = repeats forever</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cv-lfo-rows">CV / LFO Rows</h3>
+<p>Each of the 4 CV inputs is scaled, offset, then combined with a dedicated LFO.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>A / B</th>
+<th>X / Y</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="ab" src="../icons/ab.png" title="ab" /> Scale</td>
+<td>Attenuverter for CV</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><img alt="offset" src="../icons/offset.png" title="offset" /> Offset</td>
+<td>Shift for CV (A/B add knob)</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><img alt="amplitude" src="../icons/amplitude.png" title="amplitude" /> Depth</td>
+<td>LFO depth</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><img alt="period" src="../icons/period.png" title="period" /> Rate</td>
+<td>LFO frequency</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><img alt="shape" src="../icons/shape.png" title="shape" /> Shape</td>
+<td>LFO shape</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><img alt="warp" src="../icons/warp.png" title="warp" /> Warp</td>
+<td>Symmetry of shape</td>
+<td>Same</td>
+</tr>
+</tbody>
+</table>
+<h3 id="toggle-preview-row">Toggle / Preview Row</h3>
+<p><strong>Arp</strong> — toggle arp on/off.</p>
+<p>The <strong>centre 4 pads</strong> are always available to preview your patch.</p>
+<p><strong>Latch</strong> — latch previously held notes.</p>
+<hr />
+<h2 id="modulation-sources">Modulation Sources</h2>
+<p>Every parameter can be modulated from a matrix of 7 sources.
+While in parameter mode (Shift 1/2 held), select a modulation source from the <strong>rightmost column</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="tilt" src="../icons/tilt.png" title="tilt" /> Base Value</td>
+<td>Parameter value before modulation</td>
+</tr>
+<tr>
+<td><img alt="random" src="../icons/random.png" title="random" /> Random</td>
+<td>Variation added on each trigger. Positive = unipolar, negative = bipolar</td>
+</tr>
+<tr>
+<td><img alt="touch" src="../icons/touch.png" title="touch" /> Pressure</td>
+<td>Finger pressure → parameter</td>
+</tr>
+<tr>
+<td><img alt="env" src="../icons/env.png" title="env" /> Env2</td>
+<td>Envelope 2 → parameter</td>
+</tr>
+<tr>
+<td><img alt="a" src="../icons/a.png" title="a" /> A</td>
+<td>CV A + Knob A + LFO A → parameter</td>
+</tr>
+<tr>
+<td><img alt="b" src="../icons/b.png" title="b" /> B</td>
+<td>CV B + Knob B + LFO B → parameter</td>
+</tr>
+<tr>
+<td><img alt="x" src="../icons/x.png" title="x" /> X</td>
+<td>CV X + LFO X → parameter</td>
+</tr>
+<tr>
+<td><img alt="y" src="../icons/y.png" title="y" /> Y</td>
+<td>CV Y + LFO Y → parameter</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Tip:</strong> The selected modulation source is remembered. Don't forget to return to <strong>Base Value</strong>
+after editing modulations for other channels.</p>
+</blockquote>
+<hr />
+<h2 id="sample-edit-recording-mode">Sample Edit / Recording Mode</h2>
+<p>Plinky lets you record and use up to 8 samples. From preset mode, long-press one of the 8 sample
+pads (rightmost column) to enter sample edit mode. Each sample is divided into 8 <strong>slices</strong>
+corresponding to the 8 columns (strings).</p>
+<h3 id="recording">Recording</h3>
+<ol>
+<li>Press and hold the <img alt="record" src="../icons/record.png" title="record" /> <strong>Record</strong> button — a level-set screen appears</li>
+<li>Use Knob A to set the peak level (+6 dB headroom available; "CLIP!" warns of clipping)</li>
+<li>Press <img alt="play" src="../icons/play.png" title="play" /> <strong>Play</strong> or <strong>Record</strong> to arm — recording starts on detected audio or a second tap</li>
+<li><strong>Tap main pads</strong> while recording to set slice points; otherwise Plinky divides into 8 equal slices</li>
+<li>Press Play/Record to stop</li>
+</ol>
+<h3 id="sample-modes">Sample Modes</h3>
+<p><strong>Tape / Pitch mode</strong> (press Param 1 to toggle):</p>
+<ul>
+<li><strong>Tape</strong> — Sample slices span all 64 pads; pitch is only affected by the Sample Rate parameter</li>
+<li><strong>Pitched</strong> — Each slice has a reference pitch (e.g. C#3); Plinky builds a multisample keymap.
+  Set the reference pitch by sliding in the lower half of the pad area</li>
+</ul>
+<p><strong>Loop mode</strong> (press Param 2 to cycle):
+<code>Play Slice</code> → <code>Loop Slice</code> → <code>Play All</code> → <code>Loop All</code></p>
+<hr />
+<h2 id="cv-reference">CV Reference</h2>
+<h3 id="inputs-top-to-bottom">Inputs (top to bottom)</h3>
+<table>
+<thead>
+<tr>
+<th>Jack</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="ab" src="../icons/ab.png" title="ab" /> A, B, X, Y</td>
+<td>Modulation inputs combined with dedicated LFOs</td>
+</tr>
+<tr>
+<td><img alt="piano" src="../icons/piano.png" title="piano" /> Pitch</td>
+<td>1 V/Oct pitch offset (approx −1 V to +5 V)</td>
+</tr>
+<tr>
+<td><img alt="env" src="../icons/env.png" title="env" /> Gate</td>
+<td>Modulates the low-pass gates (0–5 V)</td>
+</tr>
+<tr>
+<td><img alt="tempo" src="../icons/tempo.png" title="tempo" /> Clock In</td>
+<td>1/16th note clock input</td>
+</tr>
+<tr>
+<td><img alt="jack" src="../icons/jack.png" title="jack" /> Audio In</td>
+<td>Sent to output mixer via FX; used in sampling mode</td>
+</tr>
+</tbody>
+</table>
+<h3 id="outputs-top-to-bottom">Outputs (top to bottom)</h3>
+<table>
+<thead>
+<tr>
+<th>Jack</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="tempo" src="../icons/tempo.png" title="tempo" /> Clock</td>
+<td>1/16th note clock out</td>
+</tr>
+<tr>
+<td><img alt="play" src="../icons/play.png" title="play" /> Trigger</td>
+<td>+6 V pulse on every new note</td>
+</tr>
+<tr>
+<td><img alt="right" src="../icons/right.png" title="right" /> Pitch Hi</td>
+<td>1 V/oct — rightmost string playing (respects Arp)</td>
+</tr>
+<tr>
+<td><img alt="env" src="../icons/env.png" title="env" /> Gate</td>
+<td>Analog envelope follower of the loudest string</td>
+</tr>
+<tr>
+<td><img alt="left" src="../icons/left.png" title="left" /> Pitch Lo</td>
+<td>1 V/oct — leftmost string held (ignores Arp)</td>
+</tr>
+<tr>
+<td><img alt="touch" src="../icons/touch.png" title="touch" /> Pressure</td>
+<td>Analog level of heaviest finger press</td>
+</tr>
+<tr>
+<td><img alt="right" src="../icons/right.png" title="right" /> Right</td>
+<td>Right stereo audio out</td>
+</tr>
+<tr>
+<td><img alt="left" src="../icons/left.png" title="left" /> Left</td>
+<td>Left stereo audio out (mono if no right jack plugged in)</td>
+</tr>
+</tbody>
+</table>
+<!-- Auto-appended to every page by pymdownx.snippets. -->
+<!-- Paths are relative to pages in the docs/ root. -->
+<!-- Usage: ![icon_name] — e.g. ![delay], ![adsr_a], ![play] -->
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
