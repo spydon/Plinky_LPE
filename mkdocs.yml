@@ -3,7 +3,7 @@ site_url: https://ember-labs-io.github.io/
 repo_url: https://github.com/ember-labs-io/Plinky_LPE
 repo_name: ember-labs-io/Plinky_LPE
 
-docs_dir: docs
+docs_dir: docs/markdown
 site_dir: site
 
 theme:
@@ -46,6 +46,6 @@ markdown_extensions:
   - attr_list
   - md_in_html
   - pymdownx.snippets:
-      base_path: docs
+      base_path: docs/markdown
       auto_append:
         - includes/icons.md
