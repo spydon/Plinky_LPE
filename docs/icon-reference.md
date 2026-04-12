@@ -5,7 +5,7 @@
 All icons available for use in documentation. Reference any icon with `![icon_name]` — definitions
 are in `docs/includes/icons.md`.
 
-To control size, use the `attr_list` syntax:  
+To control size, use the `{ .class }` syntax:  
 `![delay]{ .icon-lg }`  
 or inline style:  
 `![delay]{ style="width:48px;height:48px" }`.

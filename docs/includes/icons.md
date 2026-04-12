@@ -1,4 +1,4 @@
-<!-- Auto-appended to every page by pymdownx.snippets. -->
+<!-- Auto-appended to every page by the Docsify icon plugin. -->
 <!-- Paths are relative to pages in the docs/ root. -->
 <!-- Usage: ![icon_name] — e.g. ![delay], ![adsr_a], ![play] -->
 
