@@ -21,35 +21,36 @@ html, body, #main, .content, .markdown-section {
 }
 
 /* Tables */
-table {
-  display: table;
+.markdown-section table {
+  display: table !important;
+  width: auto !important;
   border-collapse: collapse;
   border: 1px solid #3b2d6b;
 }
 
-table tr {
+.markdown-section table tr {
   background-color: #13111f !important;
   border-bottom: 1px solid #2a1f4a;
 }
 
-table thead tr {
+.markdown-section table thead tr {
   background: linear-gradient(90deg, #1e1030, #2a1a45) !important;
   border-bottom: 2px solid #5c3d9e;
 }
 
-table th {
+.markdown-section table th {
   padding: 10px 14px;
   color: #ce9ff5 !important;
   font-weight: 600;
   text-align: left;
 }
 
-table td {
+.markdown-section table td {
   padding: 8px 14px;
   color: #e2dff0 !important;
 }
 
-table tr:hover {
+.markdown-section table tr:hover {
   background-color: #1a1235 !important;
 }
 
