@@ -16,6 +16,7 @@ html, body, #main, .content, .markdown-section {
 }
 
 .sidebar {
+  background-color: var(--sidebar-background) !important;
   border-right: 1px solid #30363d;
 }
 
