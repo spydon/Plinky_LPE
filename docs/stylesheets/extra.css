@@ -23,7 +23,7 @@ table {
 }
 
 table tr {
-  background-color: #0e0b18 !important;
+  background-color: #13111f !important;
   border-bottom: 1px solid #2a1f4a;
 }
 
@@ -41,7 +41,7 @@ table th {
 
 table td {
   padding: 8px 14px;
-  color: #ddd6fe !important;
+  color: #e2dff0 !important;
 }
 
 table tr:hover {
