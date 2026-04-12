@@ -6,9 +6,13 @@
   --sidebar-nav-link-color: #8b949e;
   --sidebar-nav-link-color--active: #c9d1d9;
   --sidebar-border-color: #30363d;
-  --cover-background-color: #0d1117;
+  --cover-background-color: #05060a;
   --theme-color: #9575cd;
   --link-color: #9575cd;
+}
+
+html, body, #main, .content, .markdown-section {
+  background-color: var(--base-background-color) !important;
 }
 
 .sidebar {
