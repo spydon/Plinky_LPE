@@ -20,6 +20,10 @@ html, body, #main, .content, .markdown-section {
   border-right: 1px solid #30363d;
 }
 
+.sidebar-toggle {
+  background-color: var(--sidebar-background) !important;
+}
+
 /* Tables */
 .markdown-section table {
   display: table !important;
