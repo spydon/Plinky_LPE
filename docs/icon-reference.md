@@ -1,8 +1,3 @@
----
-search:
-  exclude: true
----
-
 <div class="icon-reference-page" markdown>
 
 # Icon Reference
