@@ -1,3 +1,20 @@
+/* Dark theme overrides — replace Docsify dark.css's gray with near-black */
+:root {
+  --base-background-color: #0d1117;
+  --base-color: #e6edf3;
+  --sidebar-background: #010409;
+  --sidebar-nav-link-color: #8b949e;
+  --sidebar-nav-link-color--active: #c9d1d9;
+  --sidebar-border-color: #30363d;
+  --cover-background-color: #0d1117;
+  --theme-color: #9575cd;
+  --link-color: #9575cd;
+}
+
+.sidebar {
+  border-right: 1px solid #30363d;
+}
+
 /* Default size for all Plinky icon images */
 img[src*="icons/"] {
     display: inline-block;
