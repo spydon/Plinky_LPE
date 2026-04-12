@@ -31,6 +31,14 @@
             });
           });
 
+          // Rewrite #/README back to #/ — Docsify hardcodes /README for the
+          // homepage route, but we want the URL to stay clean at the root.
+          hook.doneEach(function() {
+            if (window.location.hash === '#/README') {
+              window.history.replaceState(null, '', '#/');
+            }
+          });
+
           // Handle attr_list { .class } syntax: <img ...>{ .icon-sm } → <img class="icon-sm" ...>
           hook.afterEach(function(html) {
             return html.replace(/<img([^>]*?)\/?>[ \t]*\{([^}]+)\}/g, function(match, attrs, classes) {
