@@ -17,17 +17,17 @@ The bin file can be placed onto the plinky using STM32CubeProgrammer, which is a
 
 At the time of writing, stm32cubeprog seems to have problems running on a mac. The first time you run it, you will see:
 
-<img src="../imgs/macsarecrap1.png" width="250">
+<img src="imgs/macsarecrap1.png" width="250">
 
 Even after allowing it to run in the Settings & Security part of the OSX control panel by clicking 'open anyway':
 
-<img src="../imgs/macsarecrap2.png" width="350">
+<img src="imgs/macsarecrap2.png" width="350">
 
 it often hangs or fails to open entirely. I do not know why.. you may need to use a PC, linux, wait for ST to fix it, or fight through various forum posts online, possibly installing outdated JREs and so forth. The page I found most helpful, that got it running for me, was https://community.st.com/t5/stm32cubeprogrammer-mcu/how-to-download-stm32cubeprogrammer-on-macos-monterey-12-6/m-p/143983 - but follow at your own risk!
 
 Assuming you have got it to run... when you run the programmer, you see this screen
 
-<img src="../imgs/programmer.png">
+<img src="imgs/programmer.png">
 
 Now, connect the plinky - the boot0 way!
 
@@ -47,13 +47,13 @@ Now inside STM32CubeProg, you should be able to load your bin file (click Open f
 
 On first boot, STM32CubeIDE, after choosing a workspace folder, should present you with a welcome screen that allows you to 'import a project'. Do so, giving this confusing dialog:
 
-<img src="../imgs/importdialog.png">
+<img src="imgs/importdialog.png">
 
 Click 'directory...' and select the directory that is the root of your git checkout. This should then show you 3 projects with checks - the first being the folder as a whole, the second being the 'sw' project (main plinky firmware), and the third being the 'bootloader' project. Make sure the latter two are checked; uncheck the root folder. click ok.
 
 You should see something like this:
 
-<img src="../imgs/project.png">
+<img src="imgs/project.png">
 
 Right click on each of the projects on the left panel, and in the context menu select 'Build Configurations' / 'Set Active' / 'Release'.
 
