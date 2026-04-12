@@ -20,7 +20,8 @@ theme:
     - content.code.copy
 
 plugins:
-  - search
+  - search:
+      lang: en
 
 nav:
   - Manual: manual.md
