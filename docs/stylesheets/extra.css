@@ -22,7 +22,6 @@ html, body, #main, .content, .markdown-section {
 
 /* Tables */
 table {
-  width: 100%;
   border-collapse: collapse;
   border: 1px solid #3b2d6b;
 }
