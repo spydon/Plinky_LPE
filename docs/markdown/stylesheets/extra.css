@@ -1,0 +1,30 @@
+/* Default size for all Plinky icon images */
+img[src*="icons/"] {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    vertical-align: middle;
+    margin: 0 1px;
+}
+
+/* Size variants — use via attr_list, e.g. ![delay]{ .icon-sm } */
+img[src*="icons/"].icon-sm {
+    width: 16px;
+    height: 16px;
+}
+
+img[src*="icons/"].icon-md {
+    width: 24px;
+    height: 24px;
+}
+
+img[src*="icons/"].icon-lg {
+    width: 32px;
+    height: 32px;
+}
+
+img[src*="icons/"].icon-xl {
+    width: 48px;
+    height: 48px;
+}
+
