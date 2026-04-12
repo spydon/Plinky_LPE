@@ -8,11 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://ember-labs-io.github.io/midi-cc/">
+        <link rel="canonical" href="https://ember-labs-io.github.io/Plinky_LPE/midi-cc/">
       
       
-        <link rel="prev" href="../parameters/">
+        <link rel="prev" href="../manual/">
       
+      
+        <link rel="next" href="../parameters/">
       
       
         
@@ -232,33 +234,6 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Home
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../manual/" class="md-nav__link">
         
   
@@ -267,60 +242,6 @@
     
   
     Manual
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../build-guide/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Build Guide
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../parameters/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Parameters
   
 
     
@@ -370,6 +291,33 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -409,435 +357,435 @@
 
 
 <h1 id="midi-cc-map">MIDI CC Map</h1>
-<p>Plinky responds to standard MIDI CC messages for parameter control. Parameters marked <code>!!!</code> are reserved and not mapped to Plinky parameters.</p>
+<p>Parameters marked <code>!!!</code> are reserved/system and not mapped to Plinky parameters.</p>
 <table>
 <thead>
 <tr>
 <th>CC</th>
-<th>Standard Name</th>
+<th>MIDI Function</th>
 <th>Plinky Parameter</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>0</td>
-<td>Bank Select</td>
-<td><em>reserved</em></td>
+<td>bank</td>
+<td><em>(reserved)</em></td>
 </tr>
 <tr>
 <td>1</td>
-<td>Modulation Wheel</td>
-<td><em>reserved</em></td>
+<td>modwheel</td>
+<td><em>(reserved)</em></td>
 </tr>
 <tr>
 <td>2</td>
-<td>Breath</td>
-<td>Noise Level (<code>P_NOISE</code>)</td>
+<td>breath</td>
+<td>P_NOISE</td>
 </tr>
 <tr>
 <td>3</td>
-<td>—</td>
-<td>Sensitivity (<code>P_SENS</code>)</td>
+<td></td>
+<td>P_SENS</td>
 </tr>
 <tr>
 <td>4</td>
-<td>Foot Controller</td>
-<td>Drive (<code>P_DRIVE</code>)</td>
+<td>foot</td>
+<td>P_DRIVE</td>
 </tr>
 <tr>
 <td>5</td>
-<td>Portamento Time</td>
-<td>Glide (<code>P_GLIDE</code>)</td>
+<td>glide</td>
+<td>P_GLIDE</td>
 </tr>
 <tr>
 <td>6</td>
-<td>Data Entry</td>
-<td><em>reserved</em></td>
+<td>DATA</td>
+<td><em>(reserved)</em></td>
 </tr>
 <tr>
 <td>7</td>
-<td>Volume</td>
-<td>Synth Level (<code>P_MIXSYNTH</code>)</td>
+<td>vol</td>
+<td>P_MIXSYNTH</td>
 </tr>
 <tr>
 <td>8</td>
-<td>Balance</td>
-<td>Wet/Dry (<code>P_MIXWETDRY</code>)</td>
+<td>balance</td>
+<td>P_MIXWETDRY</td>
 </tr>
 <tr>
 <td>9</td>
-<td>—</td>
-<td>Pitch (<code>P_PITCH</code>)</td>
+<td></td>
+<td>P_PITCH</td>
 </tr>
 <tr>
 <td>10</td>
-<td>Pan</td>
-<td>—</td>
+<td>pan</td>
+<td></td>
 </tr>
 <tr>
 <td>11</td>
-<td>Expression</td>
-<td>Gate Length (<code>P_GATE_LENGTH</code>)</td>
+<td>expr</td>
+<td>P_GATE_LENGTH</td>
 </tr>
 <tr>
 <td>12</td>
-<td>FX Control 1</td>
-<td>Delay Time (<code>P_DLTIME</code>)</td>
+<td>fx1-2</td>
+<td>P_DLTIME</td>
 </tr>
 <tr>
 <td>13</td>
-<td>FX Control 2</td>
-<td>PWM (<code>P_PWM</code>)</td>
+<td>fx1-2</td>
+<td>P_PWM</td>
 </tr>
 <tr>
 <td>14</td>
-<td>—</td>
-<td>Interval (<code>P_INTERVAL</code>)</td>
+<td></td>
+<td>P_INTERVAL</td>
 </tr>
 <tr>
 <td>15</td>
-<td>—</td>
-<td>Scrub Position (<code>P_SMP_POS</code>)</td>
+<td></td>
+<td>P_SMP_POS</td>
 </tr>
 <tr>
 <td>16</td>
-<td>—</td>
-<td>Grain Size (<code>P_SMP_GRAINSIZE</code>)</td>
+<td></td>
+<td>P_SMP_GRAINSIZE</td>
 </tr>
 <tr>
 <td>17</td>
-<td>—</td>
-<td>Sample Rate (<code>P_SMP_RATE</code>)</td>
+<td></td>
+<td>P_SMP_RATE</td>
 </tr>
 <tr>
 <td>18</td>
-<td>—</td>
-<td>Timestretch (<code>P_SMP_TIME</code>)</td>
+<td></td>
+<td>P_SMP_TIME</td>
 </tr>
 <tr>
 <td>19</td>
-<td>—</td>
-<td>Env2 Level (<code>P_ENVLVL2</code>)</td>
+<td></td>
+<td>P_ENVLVL2</td>
 </tr>
 <tr>
 <td>20</td>
-<td>—</td>
-<td>Env2 Attack (<code>P_A2</code>)</td>
+<td></td>
+<td>P_A2</td>
 </tr>
 <tr>
 <td>21</td>
-<td>—</td>
-<td>Env2 Decay (<code>P_D2</code>)</td>
+<td></td>
+<td>P_D2</td>
 </tr>
 <tr>
 <td>22</td>
-<td>—</td>
-<td>Env2 Sustain (<code>P_S2</code>)</td>
+<td></td>
+<td>P_S2</td>
 </tr>
 <tr>
 <td>23</td>
-<td>—</td>
-<td>Env2 Release (<code>P_R2</code>)</td>
+<td></td>
+<td>P_R2</td>
 </tr>
 <tr>
 <td>24</td>
-<td>—</td>
-<td>A Offset (<code>P_AOFFSET</code>)</td>
+<td></td>
+<td>P_AOFFSET</td>
 </tr>
 <tr>
 <td>25</td>
-<td>—</td>
-<td>A Depth (<code>P_ADEPTH</code>)</td>
+<td></td>
+<td>P_ADEPTH</td>
 </tr>
 <tr>
 <td>26</td>
-<td>—</td>
-<td>A Rate (<code>P_AFREQ</code>)</td>
+<td></td>
+<td>P_AFREQ</td>
 </tr>
 <tr>
 <td>27</td>
-<td>—</td>
-<td>B Offset (<code>P_BOFFSET</code>)</td>
+<td></td>
+<td>P_BOFFSET</td>
 </tr>
 <tr>
 <td>28</td>
-<td>—</td>
-<td>B Depth (<code>P_BDEPTH</code>)</td>
+<td></td>
+<td>P_BDEPTH</td>
 </tr>
 <tr>
 <td>29</td>
-<td>—</td>
-<td>B Rate (<code>P_BFREQ</code>)</td>
+<td></td>
+<td>P_BFREQ</td>
 </tr>
 <tr>
 <td>30</td>
-<td>—</td>
-<td>—</td>
+<td></td>
+<td></td>
 </tr>
 <tr>
 <td>31</td>
-<td>—</td>
-<td>High Pass Filter (<code>P_MIXHPF</code>)</td>
+<td></td>
+<td>P_MIXHPF</td>
 </tr>
 <tr>
 <td>32–63</td>
-<td>LSB (high-res pairs)</td>
-<td><em>reserved</em></td>
+<td>LSB (high-res)</td>
+<td><em>(reserved)</em></td>
 </tr>
 <tr>
 <td>64</td>
-<td>Sustain Pedal</td>
-<td><em>reserved</em></td>
+<td>sustain pedal</td>
+<td><em>(reserved)</em></td>
 </tr>
 <tr>
 <td>65</td>
-<td>Portamento Switch</td>
-<td><em>reserved</em></td>
+<td>portaswitch</td>
+<td><em>(reserved)</em></td>
 </tr>
 <tr>
 <td>66</td>
-<td>Sostenuto Switch</td>
-<td><em>reserved</em></td>
+<td>sostenswitch</td>
+<td><em>(reserved)</em></td>
 </tr>
 <tr>
 <td>67</td>
-<td>Soft Pedal</td>
-<td><em>reserved</em></td>
+<td>softpedal</td>
+<td><em>(reserved)</em></td>
 </tr>
 <tr>
 <td>68</td>
-<td>Legato Switch</td>
-<td><em>reserved</em></td>
+<td>legatoswitch</td>
+<td><em>(reserved)</em></td>
 </tr>
 <tr>
 <td>69</td>
-<td>Hold 2</td>
-<td><em>reserved</em></td>
+<td>hold2</td>
+<td><em>(reserved)</em></td>
 </tr>
 <tr>
 <td>70</td>
-<td>Sound Variation</td>
-<td>—</td>
+<td>soundvari</td>
+<td></td>
 </tr>
 <tr>
 <td>71</td>
-<td>Harmonic Content</td>
-<td>Resonance (<code>P_MIXRESO</code>)</td>
+<td>harm int</td>
+<td>P_MIXRESO</td>
 </tr>
 <tr>
 <td>72</td>
-<td>Release Time</td>
-<td>Release (<code>P_R</code>)</td>
+<td>release</td>
+<td>P_R</td>
 </tr>
 <tr>
 <td>73</td>
-<td>Attack Time</td>
-<td>Attack (<code>P_A</code>)</td>
+<td>attack</td>
+<td>P_A</td>
 </tr>
 <tr>
 <td>74</td>
-<td>Brightness</td>
-<td>Sustain (<code>P_S</code>)</td>
+<td>bright</td>
+<td>P_S</td>
 </tr>
 <tr>
 <td>75</td>
-<td>Decay Time</td>
-<td>Decay (<code>P_D</code>)</td>
+<td>decay</td>
+<td>P_D</td>
 </tr>
 <tr>
 <td>76</td>
-<td>Vibrato Rate</td>
-<td>X Rate (<code>P_XFREQ</code>)</td>
+<td>vibrate</td>
+<td>P_XFREQ</td>
 </tr>
 <tr>
 <td>77</td>
-<td>Vibrato Depth</td>
-<td>X Depth (<code>P_XDEPTH</code>)</td>
+<td>vibdepth</td>
+<td>P_XDEPTH</td>
 </tr>
 <tr>
 <td>78</td>
-<td>Vibrato Delay</td>
-<td>X Offset (<code>P_XOFFSET</code>)</td>
+<td>vibdelay</td>
+<td>P_XOFFSET</td>
 </tr>
 <tr>
 <td>79</td>
-<td>Sound Controller 10</td>
-<td>Y Rate (<code>P_YFREQ</code>)</td>
+<td>sound</td>
+<td>P_YFREQ</td>
 </tr>
 <tr>
 <td>80</td>
-<td>—</td>
-<td>Y Depth (<code>P_YDEPTH</code>)</td>
+<td></td>
+<td>P_YDEPTH</td>
 </tr>
 <tr>
 <td>81</td>
-<td>—</td>
-<td>Y Offset (<code>P_YOFFSET</code>)</td>
+<td></td>
+<td>P_YOFFSET</td>
 </tr>
 <tr>
 <td>82</td>
-<td>—</td>
-<td>Sample Select (<code>P_SAMPLE</code>)</td>
+<td></td>
+<td>P_SAMPLE</td>
 </tr>
 <tr>
 <td>83</td>
-<td>—</td>
-<td>Seq Pattern (<code>P_SEQPAT</code>)</td>
+<td></td>
+<td>P_SEQPAT</td>
 </tr>
 <tr>
 <td>84</td>
-<td>Portamento Control</td>
-<td><em>reserved</em></td>
+<td>port control</td>
+<td><em>(reserved)</em></td>
 </tr>
 <tr>
 <td>85</td>
-<td>—</td>
-<td>Seq Step (<code>P_SEQSTEP</code>)</td>
+<td></td>
+<td>P_SEQSTEP</td>
 </tr>
 <tr>
 <td>86</td>
-<td>—</td>
-<td>—</td>
+<td></td>
+<td></td>
 </tr>
 <tr>
 <td>87</td>
-<td>—</td>
-<td>—</td>
+<td></td>
+<td></td>
 </tr>
 <tr>
 <td>88</td>
-<td>High Velocity</td>
-<td><em>reserved</em></td>
+<td>HD vel</td>
+<td><em>(reserved)</em></td>
 </tr>
 <tr>
 <td>89</td>
-<td>—</td>
-<td>Input Level (<code>P_MIXINPUT</code>)</td>
+<td></td>
+<td>P_MIXINPUT</td>
 </tr>
 <tr>
 <td>90</td>
-<td>—</td>
-<td>Input → FX Level (<code>P_MIXINWETDRY</code>)</td>
+<td></td>
+<td>P_MIXINWETDRY</td>
 </tr>
 <tr>
 <td>91</td>
-<td>Reverb Send Level</td>
-<td>Reverb Send (<code>P_RVSEND</code>)</td>
+<td>reverb level</td>
+<td>P_RVSEND</td>
 </tr>
 <tr>
 <td>92</td>
-<td>FX Depth</td>
-<td>Reverb Time (<code>P_RVTIME</code>)</td>
+<td>fx depth</td>
+<td>P_RVTIME</td>
 </tr>
 <tr>
 <td>93</td>
-<td>Chorus Level</td>
-<td>Shimmer (<code>P_RVSHIM</code>)</td>
+<td>chorus level</td>
+<td>P_RVSHIM</td>
 </tr>
 <tr>
 <td>94</td>
-<td>FX Depth</td>
-<td>Delay Send (<code>P_DLSEND</code>)</td>
+<td>fx depth</td>
+<td>P_DLSEND</td>
 </tr>
 <tr>
 <td>95</td>
-<td>FX Depth</td>
-<td>Delay Feedback (<code>P_DLFB</code>)</td>
+<td>fx depth</td>
+<td>P_DLFB</td>
 </tr>
 <tr>
 <td>96–101</td>
-<td>—</td>
-<td><em>reserved</em></td>
+<td></td>
+<td><em>(reserved)</em></td>
 </tr>
 <tr>
 <td>102</td>
-<td>—</td>
-<td>Arp On/Off (<code>P_ARPONOFF</code>)</td>
+<td></td>
+<td>P_ARPONOFF</td>
 </tr>
 <tr>
 <td>103</td>
-<td>—</td>
-<td>Arp Mode (<code>P_ARPMODE</code>)</td>
+<td></td>
+<td>P_ARPMODE</td>
 </tr>
 <tr>
 <td>104</td>
-<td>—</td>
-<td>Arp Divide (<code>P_ARPDIV</code>)</td>
+<td></td>
+<td>P_ARPDIV</td>
 </tr>
 <tr>
 <td>105</td>
-<td>—</td>
-<td>Arp Probability (<code>P_ARPPROB</code>)</td>
+<td></td>
+<td>P_ARPPROB</td>
 </tr>
 <tr>
 <td>106</td>
-<td>—</td>
-<td>Arp Euclid Length (<code>P_ARPLEN</code>)</td>
+<td></td>
+<td>P_ARPLEN</td>
 </tr>
 <tr>
 <td>107</td>
-<td>—</td>
-<td>Arp Octave (<code>P_ARPOCT</code>)</td>
+<td></td>
+<td>P_ARPOCT</td>
 </tr>
 <tr>
 <td>108</td>
-<td>—</td>
-<td>Seq Mode (<code>P_SEQMODE</code>)</td>
+<td></td>
+<td>P_SEQMODE</td>
 </tr>
 <tr>
 <td>109</td>
-<td>—</td>
-<td>Seq Divide (<code>P_SEQDIV</code>)</td>
+<td></td>
+<td>P_SEQDIV</td>
 </tr>
 <tr>
 <td>110</td>
-<td>—</td>
-<td>Seq Probability (<code>P_SEQPROB</code>)</td>
+<td></td>
+<td>P_SEQPROB</td>
 </tr>
 <tr>
 <td>111</td>
-<td>—</td>
-<td>Seq Euclid Length (<code>P_SEQLEN</code>)</td>
+<td></td>
+<td>P_SEQLEN</td>
 </tr>
 <tr>
 <td>112</td>
-<td>—</td>
-<td>Delay Ratio (<code>P_DLRATIO</code>)</td>
+<td></td>
+<td>P_DLRATIO</td>
 </tr>
 <tr>
 <td>113</td>
-<td>—</td>
-<td>Delay Wobble (<code>P_DLWOB</code>)</td>
+<td></td>
+<td>P_DLWOB</td>
 </tr>
 <tr>
 <td>114</td>
-<td>—</td>
-<td>Reverb Wobble (<code>P_RVWOB</code>)</td>
+<td></td>
+<td>P_RVWOB</td>
 </tr>
 <tr>
 <td>115</td>
-<td>—</td>
-<td>—</td>
+<td></td>
+<td></td>
 </tr>
 <tr>
 <td>116</td>
-<td>—</td>
-<td>Scrub Jitter (<code>P_JIT_POS</code>)</td>
+<td></td>
+<td>P_JIT_POS</td>
 </tr>
 <tr>
 <td>117</td>
-<td>—</td>
-<td>Grain Size Jitter (<code>P_JIT_GRAINSIZE</code>)</td>
+<td></td>
+<td>P_JIT_GRAINSIZE</td>
 </tr>
 <tr>
 <td>118</td>
-<td>—</td>
-<td>Rate Jitter (<code>P_JIT_RATE</code>)</td>
+<td></td>
+<td>P_JIT_RATE</td>
 </tr>
 <tr>
 <td>119</td>
-<td>—</td>
-<td>Pulse Jitter (<code>P_JIT_PULSE</code>)</td>
+<td></td>
+<td>P_JIT_PULSE</td>
 </tr>
 </tbody>
 </table>

@@ -8,7 +8,7 @@
       
       
       
-        <link rel="canonical" href="https://ember-labs-io.github.io/raw_build_guide/">
+        <link rel="canonical" href="https://ember-labs-io.github.io/Plinky_LPE/raw_build_guide/">
       
       
       
@@ -230,33 +230,6 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Home
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../manual/" class="md-nav__link">
         
   
@@ -284,14 +257,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../build-guide/" class="md-nav__link">
+      <a href="../midi-cc/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Build Guide
+    MIDI CC Map
   
 
     
@@ -319,33 +292,6 @@
     
   
     Parameters
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../midi-cc/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    MIDI CC Map
   
 
     
@@ -487,12 +433,12 @@ You can also build it from source, more information further down this document.<
 <p>The bin file is typically named <code>plink09z.bin</code> or similar, where the last 3 digits represent the version number. Note that the .uf2 version of this file is just the main firmware, and can be installed via plinky's bootloader (as detailed in the manual). However, that only works once the bootloader is put onto plinky in the first place! a freshly manufactured plinky has no such bootloader, and that's why you need the .bin file. </p>
 <p>The bin file can be placed onto the plinky using STM32CubeProgrammer, which is available for free from <a href="https://www.st.com/en/development-tools/stm32cubeprog.html">ST here</a>. </p>
 <p>At the time of writing, stm32cubeprog seems to have problems running on a mac. The first time you run it, you will see:</p>
-<p><img src="imgs/macsarecrap1.png" width="250"></p>
+<p><img src="../imgs/macsarecrap1.png" width="250"></p>
 <p>Even after allowing it to run in the Settings &amp; Security part of the OSX control panel by clicking 'open anyway':</p>
-<p><img src="imgs/macsarecrap2.png" width="350"></p>
+<p><img src="../imgs/macsarecrap2.png" width="350"></p>
 <p>it often hangs or fails to open entirely. I do not know why.. you may need to use a PC, linux, wait for ST to fix it, or fight through various forum posts online, possibly installing outdated JREs and so forth. The page I found most helpful, that got it running for me, was https://community.st.com/t5/stm32cubeprogrammer-mcu/how-to-download-stm32cubeprogrammer-on-macos-monterey-12-6/m-p/143983 - but follow at your own risk!</p>
 <p>Assuming you have got it to run... when you run the programmer, you see this screen</p>
-<p><img src="imgs/programmer.png"></p>
+<p><img src="../imgs/programmer.png"></p>
 <p>Now, connect the plinky - the boot0 way!</p>
 <p>What's that you ask?</p>
 <p>First, find the 'boot0' and nearby '3v3' pad on the back of plinky. you need to short these together using a piece of metal or pliers or similar, BEFORE and then as you plug plinky in to the computer via USB for the first time. Once power is applied over USB, you can remove your piece of metal. </p>
@@ -508,10 +454,10 @@ You can also build it from source, more information further down this document.<
 <li>you need python 3.x to be installed and working (check if you can run python from the commandline)</li>
 </ul>
 <p>On first boot, STM32CubeIDE, after choosing a workspace folder, should present you with a welcome screen that allows you to 'import a project'. Do so, giving this confusing dialog:</p>
-<p><img src="imgs/importdialog.png"></p>
+<p><img src="../imgs/importdialog.png"></p>
 <p>Click 'directory...' and select the directory that is the root of your git checkout. This should then show you 3 projects with checks - the first being the folder as a whole, the second being the 'sw' project (main plinky firmware), and the third being the 'bootloader' project. Make sure the latter two are checked; uncheck the root folder. click ok.</p>
 <p>You should see something like this:</p>
-<p><img src="imgs/project.png"></p>
+<p><img src="../imgs/project.png"></p>
 <p>Right click on each of the projects on the left panel, and in the context menu select 'Build Configurations' / 'Set Active' / 'Release'.</p>
 <p>Now go to the app's 'Project' menu and select 'Build All'.</p>
 <p>If all goes well, that should succeed and write files into the <code>bootloader/Release</code> and <code>sw/Release</code> folders.</p>
