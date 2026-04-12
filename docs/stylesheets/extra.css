@@ -20,24 +20,40 @@ table {
   display: table;
   width: 100%;
   border-collapse: collapse;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #2d2040;
 }
 
 thead tr {
-  background-color: #161b22;
+  background: linear-gradient(90deg, #1e1030, #2a1a45);
 }
 
-th, td {
-  padding: 8px 12px;
-  border: 1px solid #30363d;
-  color: #e6edf3;
+th {
+  padding: 10px 14px;
+  color: #ce9ff5;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border-bottom: 2px solid #4a2d7a;
+  border-right: 1px solid #3a2060;
+}
+
+td {
+  padding: 8px 14px;
+  color: #cdd6f4;
+  border-right: 1px solid #1e1a2e;
 }
 
 tbody tr:nth-child(odd) {
-  background-color: #0d1117;
+  background-color: #110d1e;
 }
 
 tbody tr:nth-child(even) {
-  background-color: #161b22;
+  background-color: #170f28;
+}
+
+tbody tr:hover {
+  background-color: #1f1440;
 }
 
 /* Default size for all Plinky icon images */
