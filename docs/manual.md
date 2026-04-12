@@ -69,133 +69,133 @@ Parameters are grouped in rows, from bottom to top. There are two parameters per
 
 ### Sampler Row
 
-**Sample Choice** — selects which sample is active, or 0 for none. Allows automation of the current sample.  
-**Noise Level** — the amount of white noise mixed with the main synth oscillator/sample player.
+![seq]{ .icon-sm } **Sample Choice** — selects which sample is active, or 0 for none. Allows automation of the current sample.  
+![wave]{ .icon-sm } **Noise Level** — the amount of white noise mixed with the main synth oscillator/sample player.
 
-**Scrub** — Adds an offset to the position within the sample whence the grains are plucked.  
-**Scrub jitter** — Randomises the scrub position per grain.
+![right]{ .icon-sm } **Scrub** — Adds an offset to the position within the sample whence the grains are plucked.  
+![right]{ .icon-sm } **Scrub jitter** — Randomises the scrub position per grain.
 
-**Rate** — changes the playback rate of the sample, slowing and pitching it like a record. Try negative for reverse.  
-**Rate jitter** — Randomises the rate per grain.
+![right]{ .icon-sm } **Rate** — changes the playback rate of the sample, slowing and pitching it like a record. Try negative for reverse.  
+![right]{ .icon-sm } **Rate jitter** — Randomises the rate per grain.
 
-**Grain Size** — changes the size of each grain, from metallic tiny grains to smooth long grains.  
-**Grain Size Jitter** — randomises the grain size per grain.
+![period]{ .icon-sm } **Grain Size** — changes the size of each grain, from metallic tiny grains to smooth long grains.  
+![period]{ .icon-sm } **Grain Size Jitter** — randomises the grain size per grain.
 
-**Timestretch** — changes the playback rate of the sample, without changing the pitch. Try negative for reverse.  
+![time]{ .icon-sm } **Timestretch** — changes the playback rate of the sample, without changing the pitch. Try negative for reverse.  
 *(secondary — UNUSED)*
 
-**Headphone Volume** — changes the master volume of the headphone jack on the underside of plinky.  
-**Quantise mode** — selects how much quantisation is applied to the pitch CV input: from none, to chromatic, to rotations of the selected scale.
+![phones]{ .icon-sm } **Headphone Volume** — changes the master volume of the headphone jack on the underside of plinky.  
+![cv-quantize]{ .icon-sm } **Quantise mode** — selects how much quantisation is applied to the pitch CV input: from none, to chromatic, to rotations of the selected scale.
 
 ### Arp/Sequencer Row
 
-**Order** — changes the order of notes in the arpeggio.  
-**Order** — same for Sequencer.
+![order]{ .icon-sm } **Order** — changes the order of notes in the arpeggio.  
+![order]{ .icon-sm } **Order** — same for Sequencer.
 
-**Divide** — clock divider for the arpeggio.  
-**Divide** — same for Sequencer.
+![tempo]{ .icon-sm } **Divide** — clock divider for the arpeggio.  
+![tempo]{ .icon-sm } **Divide** — same for Sequencer.
 
-**Probability** — sets the chance of a note triggering in the arp. Negative values skip, positive values pause. Note that the rhythm is either euclidean or random depending on the next parameter.  
-**Probability** — same for Sequencer.
+![percent]{ .icon-sm } **Probability** — sets the chance of a note triggering in the arp. Negative values skip, positive values pause. Note that the rhythm is either euclidean or random depending on the next parameter.  
+![percent]{ .icon-sm } **Probability** — same for Sequencer.
 
-**Euclid** — How many steps in the euclidean rhythm set by the probability. 1 or 0 steps mean 'random'.  
-**Euclid** — same for sequencer.
+![length]{ .icon-sm } **Euclid** — How many steps in the euclidean rhythm set by the probability. 1 or 0 steps mean 'random'.  
+![length]{ .icon-sm } **Euclid** — same for sequencer.
 
-**Arp Octave** — how many octaves to spread the Arp over.  
-**Seq Pattern** — current pattern; allows CV / LFO control over sequencer pattern choice.
+![octave]{ .icon-sm } **Arp Octave** — how many octaves to spread the Arp over.  
+![seq]{ .icon-sm } **Seq Pattern** — current pattern; allows CV / LFO control over sequencer pattern choice.
 
-**Tempo** — tap repeatedly to set a tap tempo, or use as a slider to set BPM. If 1/16th note clock pulses are received on the clock CV input, this is updated automatically.  
-**Seq Step** — current step; allows CV / LFO control over sequencer step playback.
+![play]{ .icon-sm } **Tempo** — tap repeatedly to set a tap tempo, or use as a slider to set BPM. If 1/16th note clock pulses are received on the clock CV input, this is updated automatically.  
+![interval]{ .icon-sm } **Seq Step** — current step; allows CV / LFO control over sequencer step playback.
 
 ### VCA/Mixer Row
 
-**Sensitivity** — how much pressure is needed to fully open the low pass gate. Low values give softer sine sounds.  
-**Input Level** — level of the audio input jack, that is sent to output.
+![touch]{ .icon-sm } **Sensitivity** — how much pressure is needed to fully open the low pass gate. Low values give softer sine sounds.  
+![jack]{ .icon-sm } **Input Level** — level of the audio input jack, that is sent to output.
 
-**Drive** — output drive level of the synth, before fx. High levels cause extreme guitar-like screams with polyphonic chords, due to intermodulation distortion.  
-**Synth Level** — level of the dry synth audio in the output. Can be used to compensate for high drive levels being loud.
+![distort]{ .icon-sm } **Drive** — output drive level of the synth, before fx. High levels cause extreme guitar-like screams with polyphonic chords, due to intermodulation distortion.  
+![wave]{ .icon-sm } **Synth Level** — level of the dry synth audio in the output. Can be used to compensate for high drive levels being loud.
 
-**Attack** — attack time of the envelope that drives the low pass gate.  
-**In→FX level** — wet level for the input audio.
+![adsr_a]{ .icon-sm } **Attack** — attack time of the envelope that drives the low pass gate.  
+![jack]{ .icon-sm } **In→FX level** — wet level for the input audio.
 
-**Decay** — decay time of the envelope that drives the low pass gate.  
-**Wet** — wet/dry level for the fx. Bipolar.
+![adsr_d]{ .icon-sm } **Decay** — decay time of the envelope that drives the low pass gate.  
+![reverb]{ .icon-sm } **Wet** — wet/dry level for the fx. Bipolar.
 
-**Sustain** — sustain level of the envelope that drives the low pass gate.  
-**High Pass Cutoff** — cutoff frequency for the global high pass filter, good for taming any boominess.
+![adsr_s]{ .icon-sm } **Sustain** — sustain level of the envelope that drives the low pass gate.  
+![hpf]{ .icon-sm } **High Pass Cutoff** — cutoff frequency for the global high pass filter, good for taming any boominess.
 
-**Release** — release time of the envelope that drives the low pass gate.  
-**Resonance** — unruly resonance control for the low pass gates.
+![adsr_r]{ .icon-sm } **Release** — release time of the envelope that drives the low pass gate.  
+![distort]{ .icon-sm } **Resonance** — unruly resonance control for the low pass gates.
 
 ### Pitch Row
 
-**Octave** — base octave for the synth.  
-**Rotate** — shifts all notes, but keeping them within the current scale.
+![octave]{ .icon-sm } **Octave** — base octave for the synth.  
+![offset]{ .icon-sm } **Rotate** — shifts all notes, but keeping them within the current scale.
 
-**Pitch** — base pitch for the synth. Unquantized.  
-**Scale** — selects which scale is used by the pads & rotate feature.
+![piano]{ .icon-sm } **Pitch** — base pitch for the synth. Unquantized.  
+![piano]{ .icon-sm } **Scale** — selects which scale is used by the pads & rotate feature.
 
-**Glide** — glide time. Each string glides independently.  
-**Microtone** — amount of quantizing to apply. 0=fully quantized, 100=completely 'analog' pitches.
+![glide]{ .icon-sm } **Glide** — glide time. Each string glides independently.  
+![micro]{ .icon-sm } **Microtone** — amount of quantizing to apply. 0=fully quantized, 100=completely 'analog' pitches.
 
-**Interval** — adds a fixed interval between the oscillators on each string. Try ±7 (a fifth) or ±12 (octave).  
-**Stride** — sets the interval between successive strings from left to right.
+![offset]{ .icon-sm } **Interval** — adds a fixed interval between the oscillators on each string. Try ±7 (a fifth) or ±12 (octave).  
+![offset]{ .icon-sm } **Stride** — sets the interval between successive strings from left to right.
 
-**Gate length** — turn down from 100% to get more staccato notes from the Arpeggiator and Sequencer.  
-**PWM** — at 0%, plinky produces 4 sawtooths per string. Above 0%, it flips & adjusts the phase of 2 of them, giving a pulse/square waveform whose width this controls.
+![interval]{ .icon-sm } **Gate length** — turn down from 100% to get more staccato notes from the Arpeggiator and Sequencer.  
+![shape]{ .icon-sm } **PWM** — at 0%, plinky produces 4 sawtooths per string. Above 0%, it flips & adjusts the phase of 2 of them, giving a pulse/square waveform whose width this controls.
 
-**Env2 Rate** — controls the speed of the 2nd envelope.  
-**Env2 Warp** — controls whether the Envelope is a ramp down (-100), a triangle (0), or a ramp up (100).
+![tempo]{ .icon-sm } **Env2 Rate** — controls the speed of the 2nd envelope.  
+![warp]{ .icon-sm } **Env2 Warp** — controls whether the Envelope is a ramp down (-100), a triangle (0), or a ramp up (100).
 
 ### FX Row
 
-**Delay Send** — amount of dry signal to send to delay unit.  
-**Reverb Send** — same for reverb.
+![send]{ .icon-sm } **Delay Send** — amount of dry signal to send to delay unit.  
+![send]{ .icon-sm } **Reverb Send** — same for reverb.
 
-**Delay Time** — length of the delay time. Negative values are beat synced, positive values are free.  
-**Reverb Time** — length of the reverb.
+![tempo]{ .icon-sm } **Delay Time** — length of the delay time. Negative values are beat synced, positive values are free.  
+![time]{ .icon-sm } **Reverb Time** — length of the reverb.
 
-**Second Tap** — values less than 100% cause the left and right stereo channels to have different delay lengths, giving a ping-pong effect. Try musical ratios like 50% or 75%.  
-**Shimmer** — level of reverb shimmer effect.
+![tilt]{ .icon-sm } **Second Tap** — values less than 100% cause the left and right stereo channels to have different delay lengths, giving a ping-pong effect. Try musical ratios like 50% or 75%.  
+![feedback]{ .icon-sm } **Shimmer** — level of reverb shimmer effect.
 
-**Delay Wobble** — adds a wow/flutter LFO to the delay time, causing pitch shifts.  
-**Reverb Wobble** — same for reverb.
+![wave]{ .icon-sm } **Delay Wobble** — adds a wow/flutter LFO to the delay time, causing pitch shifts.  
+![wave]{ .icon-sm } **Reverb Wobble** — same for reverb.
 
-**Feedback** — amount of feedback in the delay.  
-**Reverb** — unused.
+![feedback]{ .icon-sm } **Feedback** — amount of feedback in the delay.  
+![cross]{ .icon-sm } **Reverb** — unused.
 
-**Env2 Level** — amount (depth) of the second envelope.  
-**Env2 Repeat** — repeat amount. At 100%, the envelope repeats forever; \<100%, it decays. 0% — it doesn't repeat.
+![amplitude]{ .icon-sm } **Env2 Level** — amount (depth) of the second envelope.  
+![play]{ .icon-sm } **Env2 Repeat** — repeat amount. At 100%, the envelope repeats forever; \<100%, it decays. 0% — it doesn't repeat.
 
 ### CV / LFO Rows
 
 Each of the 4 CV modulation inputs is scaled and offset, then added to a dedicated LFO.
 
-**Scale A** — attenuverter for the CV input A.  
-**Scale B** — same for B.
+![amplitude]{ .icon-sm } **Scale A** — attenuverter for the CV input A.  
+![amplitude]{ .icon-sm } **Scale B** — same for B.
 
-**Offset A** — shift for the CV input A. Dedicated Knob A is always added to this.  
-**Offset B** — same for B.
+![offset]{ .icon-sm } **Offset A** — shift for the CV input A. Dedicated Knob A is always added to this.  
+![offset]{ .icon-sm } **Offset B** — same for B.
 
-**Depth A** — LFO depth for A.  
-**Depth B** — same for B.
+![amplitude]{ .icon-sm } **Depth A** — LFO depth for A.  
+![amplitude]{ .icon-sm } **Depth B** — same for B.
 
-**Rate A** — LFO frequency for A.  
-**Rate B** — same for B.
+![tempo]{ .icon-sm } **Rate A** — LFO frequency for A.  
+![tempo]{ .icon-sm } **Rate B** — same for B.
 
-**Shape A** — LFO shape for A.  
-**Shape B** — same for B.
+![shape]{ .icon-sm } **Shape A** — LFO shape for A.  
+![shape]{ .icon-sm } **Shape B** — same for B.
 
-**Warp A** — changes the symmetry of the shape, eg ramp down → triangle → ramp up.  
-**Warp B** — same for B.
+![warp]{ .icon-sm } **Warp A** — changes the symmetry of the shape, eg ramp down → triangle → ramp up.  
+![warp]{ .icon-sm } **Warp B** — same for B.
 
 ### Toggle / Preview Row
 
-**Arp** — arp mode on/off.
+![play]{ .icon-sm } **Arp** — arp mode on/off.
 
 The center 4 pads are always available to preview your patch.
 
-**Latch** — 'latch' previously held notes down.
+![play]{ .icon-sm } **Latch** — 'latch' previously held notes down.
 
 ## Modulation Sources
 
